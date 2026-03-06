@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.bjanda.backup-claude</string>
+  <key>WatchPaths</key>
+  <array>
+    <string>__HOME__/.claude/CLAUDE.md</string>
+  </array>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/bin/cp</string>
+    <string>__HOME__/.claude/CLAUDE.md</string>
+    <string>__HOME__/Vault/Backups/mac-claude/CLAUDE.md</string>
+  </array>
+</dict>
+</plist>
