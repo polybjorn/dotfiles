@@ -54,6 +54,8 @@ Plists are COPIED (not symlinked) because launchd removes symlinks on unload.
 | mac-stats-push | Every 5 min | mac-stats-push.sh |
 | brew-maintenance | Sun 09:00 | brew-maintenance.sh |
 | obsidian-weekly-note | Mon 00:05 | obsidian-weekly-note.py |
+| obsidian-new-year | Jan 1 09:00 | obsidian-new-year.sh |
+| photo-sort | Every 30 min | photo-sort.sh |
 
 ## Key paths
 
