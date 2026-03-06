@@ -14,8 +14,8 @@ if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]
 fi
 if [[ "$OSTYPE" == darwin* ]]; then
   source /opt/homebrew/share/powerlevel10k/powerlevel10k.zsh-theme
-else
-  source ~/.local/share/powerlevel10k/powerlevel10k.zsh-theme
+elif [[ -f "${ZDOTDIR}/powerlevel10k/powerlevel10k.zsh-theme" ]]; then
+  source "${ZDOTDIR}/powerlevel10k/powerlevel10k.zsh-theme"
 fi
 [[ ! -f "${ZDOTDIR}/.p10k.zsh" ]] || source "${ZDOTDIR}/.p10k.zsh"
 
@@ -33,11 +33,23 @@ setopt SHARE_HISTORY
 
 # ── Shell behaviour ─────────────────────────────────────
 setopt AUTO_CD
-unsetopt CORRECT  # disabled in favour of thefuck
 setopt GLOB_DOTS
 
+# ── Plugins ──────────────────────────────────────────────
+if [[ "$OSTYPE" == darwin* ]]; then
+  ZSH_PLUGIN_DIR="/opt/homebrew/share"
+elif [[ -d "${ZDOTDIR}/plugins" ]]; then
+  ZSH_PLUGIN_DIR="${ZDOTDIR}/plugins"
+else
+  ZSH_PLUGIN_DIR="/usr/share"
+fi
+source "$ZSH_PLUGIN_DIR/zsh-autosuggestions/zsh-autosuggestions.zsh"
+source "$ZSH_PLUGIN_DIR/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh"
+source "$ZSH_PLUGIN_DIR/zsh-history-substring-search/zsh-history-substring-search.zsh"
+
 # ── Completion ───────────────────────────────────────────
-fpath=($HOME/.docker/completions $fpath)
+[[ -d "$HOME/.docker/completions" ]] && fpath=($HOME/.docker/completions $fpath)
+[[ -d "$ZSH_PLUGIN_DIR/zsh-completions/src" ]] && fpath=($ZSH_PLUGIN_DIR/zsh-completions/src $fpath)
 autoload -Uz compinit
 if [[ -n ${ZDOTDIR}/.zcompdump(#qN.mh+24) ]]; then
   compinit
@@ -51,37 +63,41 @@ zstyle ':completion:*:descriptions' format '%F{yellow}-- %d --%f'
 
 # ── bat ──────────────────────────────────────────────────
 export BAT_THEME="Catppuccin Mocha"
-export MANPAGER="sh -c 'col -bx | bat -l man -p'"
-export MANROFFOPT="-c"
-
-# ── Plugins ──────────────────────────────────────────────
 if [[ "$OSTYPE" == darwin* ]]; then
-  ZSH_PLUGIN_DIR="/opt/homebrew/share"
+  export MANPAGER="sh -c 'col -bx | bat -l man -p'"
 else
-  ZSH_PLUGIN_DIR="/usr/share"
+  export MANPAGER="sh -c 'col -bx | batcat -l man -p'"
 fi
-source "$ZSH_PLUGIN_DIR/zsh-autosuggestions/zsh-autosuggestions.zsh"
-source "$ZSH_PLUGIN_DIR/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh"
-source "$ZSH_PLUGIN_DIR/zsh-history-substring-search/zsh-history-substring-search.zsh"
+export MANROFFOPT="-c"
 bindkey '^[[A' history-substring-search-up
 bindkey '^[[B' history-substring-search-down
 
 # ── FZF ──────────────────────────────────────────────────
-source <(fzf --zsh)
+if [[ "$OSTYPE" == darwin* ]]; then
+  source <(fzf --zsh)
+else
+  [[ -f /usr/share/doc/fzf/examples/key-bindings.zsh ]] && source /usr/share/doc/fzf/examples/key-bindings.zsh
+  [[ -f /usr/share/doc/fzf/examples/completion.zsh ]] && source /usr/share/doc/fzf/examples/completion.zsh
+fi
 
 # ── Zoxide ───────────────────────────────────────────────
 eval "$(zoxide init zsh)"
 
 # ── thefuck ─────────────────────────────────────────────
-eval $(thefuck --alias)
-fuck-command() {
-  BUFFER="fuck"
-  zle accept-line
-}
-zle -N fuck-command
-bindkey -M emacs '\e\e' fuck-command
-bindkey -M vicmd '\e\e' fuck-command
-bindkey -M viins '\e\e' fuck-command
+if command -v thefuck &>/dev/null; then
+  eval $(thefuck --alias)
+  unsetopt CORRECT
+  fuck-command() {
+    BUFFER="fuck"
+    zle accept-line
+  }
+  zle -N fuck-command
+  bindkey -M emacs '\e\e' fuck-command
+  bindkey -M vicmd '\e\e' fuck-command
+  bindkey -M viins '\e\e' fuck-command
+else
+  setopt CORRECT
+fi
 
 # ── Aliases ──────────────────────────────────────────────
 [[ -f "${ZDOTDIR}/aliases.zsh" ]] && source "${ZDOTDIR}/aliases.zsh"
