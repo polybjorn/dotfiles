@@ -46,7 +46,7 @@ mkdir -p "$HOME/.local/bin"
 
 link_file "$DOTFILES/shared/shell/.zshenv" "$HOME/.zshenv"
 
-for f in .zshrc aliases.zsh .p10k.zsh; do
+for f in .zshrc aliases.zsh; do
   link_file "$DOTFILES/shared/shell/$f" "$HOME/.config/zsh/$f"
 done
 
@@ -77,8 +77,9 @@ case "$OS" in
     echo ""
     info "macOS setup..."
 
-    # .zprofile
+    # .zprofile + .p10k.zsh
     link_file "$DOTFILES/macos/shell/.zprofile" "$HOME/.zprofile"
+    link_file "$DOTFILES/shared/shell/.p10k.zsh" "$HOME/.config/zsh/.p10k.zsh"
 
     # Hammerspoon
     mkdir -p "$HOME/.hammerspoon/Spoons"
@@ -153,8 +154,9 @@ EOF
     echo ""
     info "Linux setup..."
 
-    # .zprofile
+    # .zprofile + .p10k.zsh
     link_file "$DOTFILES/linux/shell/.zprofile" "$HOME/.zprofile"
+    link_file "$DOTFILES/linux/shell/.p10k.zsh" "$HOME/.config/zsh/.p10k.zsh"
 
     # Platform-specific git config
     mkdir -p "$HOME/.config/git"

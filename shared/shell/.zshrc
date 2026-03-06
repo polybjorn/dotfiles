@@ -33,6 +33,7 @@ setopt SHARE_HISTORY
 
 # ── Shell behaviour ─────────────────────────────────────
 setopt AUTO_CD
+setopt CORRECT
 setopt GLOB_DOTS
 
 # ── Plugins ──────────────────────────────────────────────
@@ -82,22 +83,6 @@ fi
 
 # ── Zoxide ───────────────────────────────────────────────
 eval "$(zoxide init zsh)"
-
-# ── thefuck ─────────────────────────────────────────────
-if command -v thefuck &>/dev/null; then
-  eval $(thefuck --alias)
-  unsetopt CORRECT
-  fuck-command() {
-    BUFFER="fuck"
-    zle accept-line
-  }
-  zle -N fuck-command
-  bindkey -M emacs '\e\e' fuck-command
-  bindkey -M vicmd '\e\e' fuck-command
-  bindkey -M viins '\e\e' fuck-command
-else
-  setopt CORRECT
-fi
 
 # ── Aliases ──────────────────────────────────────────────
 [[ -f "${ZDOTDIR}/aliases.zsh" ]] && source "${ZDOTDIR}/aliases.zsh"
