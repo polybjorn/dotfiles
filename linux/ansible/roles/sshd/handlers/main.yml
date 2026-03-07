@@ -1,0 +1,11 @@
+---
+- name: Validate sshd config
+  command: sshd -t
+  changed_when: false
+  listen: restart sshd
+
+- name: Restart sshd
+  systemd:
+    name: sshd
+    state: restarted
+  listen: restart sshd

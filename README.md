@@ -38,7 +38,8 @@ ansible-playbook linux/ansible/site.yml
 
 ```
 chezmoi (all machines)            Ansible (servers, from Mac over SSH)
-  ~/.zshenv                        /usr/local/bin/* (scripts)
+  ~/.zshenv                        /etc/ssh/sshd_config (template)
+  ~/.ssh/config                    /usr/local/bin/* (scripts)
   ~/.config/zsh/                   /etc/systemd/system/* (timers)
   ~/.config/git/                   /etc/nginx/sites-available/* (templates)
   ~/.local/bin/* (scripts)         /etc/ntfy/server.yml (template)
@@ -58,6 +59,7 @@ Secrets are separated: chezmoi uses age encryption, Ansible uses a gitignored va
 - Cross-platform aliases with `$OSTYPE` branching
 - Cross-platform scripts: pkg-maintenance, ntfy, backup-status, syncthing-status
 - XDG Base Directory layout
+- SSH config with key pinning, multiplexing (ControlMaster), keepalive
 - Global git pre-commit hook: gitleaks secret scan + PII pattern scan
   - PII patterns file templated per-machine via chezmoi
   - Health-check validates hook is deployed
@@ -66,10 +68,11 @@ Secrets are separated: chezmoi uses age encryption, Ansible uses a gitignored va
 - Hammerspoon window management (MiroWindowsManager)
 - LaunchAgent scheduled tasks
 - Homebrew Brewfile (auto-installed via chezmoi `run_after_`)
-- macOS system defaults (opt-in)
+- macOS system defaults (opt-in) — includes firewall + stealth mode
 - Photo sorting
 
 ### Server infrastructure (Ansible-managed)
+- sshd hardening (key-only auth, no root login, AllowUsers)
 - Server scripts (backup, health check, FreshRSS, nightmode, etc.)
 - Systemd services and timers
 - Nginx reverse proxy configs (Ansible Jinja2 templates)
@@ -115,6 +118,9 @@ dotfiles/                              # chezmoi source directory
 ├── dot_zshenv                         # → ~/.zshenv
 ├── dot_gitconfig                      # → ~/.gitconfig
 ├── dot_zprofile.tmpl                  # → ~/.zprofile (templated per platform)
+├── private_dot_ssh/
+│   ├── config                         # → ~/.ssh/config (multiplexing, key pinning)
+│   └── private_sockets/               # → ~/.ssh/sockets/ (ControlMaster)
 ├── private_dot_config/
 │   ├── zsh/                           # shell config (ZDOTDIR)
 │   ├── git/                           # git config + ignore
@@ -139,6 +145,7 @@ dotfiles/                              # chezmoi source directory
 │       │   ├── scripts/               # symlink scripts
 │       │   ├── systemd/               # copy units, enable timers
 │       │   ├── nginx/templates/       # Jinja2 nginx configs
+│       │   ├── sshd/templates/        # sshd_config hardening
 │       │   ├── configs/templates/     # Jinja2 ntfy + cloudflared configs
 │       │   ├── dashboard/             # symlink pi-dashboard
 │       │   └── sudoers/               # timer control permissions

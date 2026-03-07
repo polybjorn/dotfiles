@@ -1,0 +1,28 @@
+# Managed by Ansible — do not edit manually
+
+Include /etc/ssh/sshd_config.d/*.conf
+
+# Authentication
+PermitRootLogin no
+PubkeyAuthentication yes
+PasswordAuthentication no
+KbdInteractiveAuthentication no
+MaxAuthTries 3
+AllowUsers {{ user_name }}
+
+# Security
+X11Forwarding no
+PermitEmptyPasswords no
+PrintMotd no
+UsePAM yes
+
+# Networking
+TCPKeepAlive yes
+ClientAliveInterval 120
+ClientAliveCountDown 3
+
+# Locale
+AcceptEnv LANG LC_*
+
+# Subsystems
+Subsystem sftp /usr/lib/openssh/sftp-server

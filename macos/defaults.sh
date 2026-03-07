@@ -47,6 +47,15 @@ defaults write com.apple.Safari ShowFullURLInSmartSearchField -bool true
 # ── Activity Monitor ────────────────────────────────────
 defaults write com.apple.ActivityMonitor ShowCategory -int 0
 
+# ── Security (requires sudo) ──────────────────────────
+if [ "$(id -u)" -eq 0 ] || sudo -n true 2>/dev/null; then
+  sudo /usr/libexec/ApplicationFirewall/socketfilterfw --setglobalstate on
+  sudo /usr/libexec/ApplicationFirewall/socketfilterfw --setstealthmode on
+  echo "  [ok] Firewall enabled with stealth mode"
+else
+  echo "  [skip] Firewall — run with sudo or enter password to enable"
+fi
+
 # ── Restart affected apps ──────────────────────────────
 for app in "Finder" "Dock" "SystemUIServer"; do
   killall "$app" &>/dev/null || true
