@@ -1,0 +1,7 @@
+[Unit]
+Description=FreshRSS feed refresh
+
+[Service]
+Type=oneshot
+User=www-data
+ExecStart=/usr/bin/php /var/www/FreshRSS/app/actualize_script.php

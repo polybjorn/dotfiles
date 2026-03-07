@@ -1,0 +1,12 @@
+[Unit]
+Description=Radicale CalDAV/CardDAV Server
+After=network.target
+OnFailure=ntfy-failure@%n.service
+
+[Service]
+ExecStart=/opt/radicale/bin/radicale
+User=www-data
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

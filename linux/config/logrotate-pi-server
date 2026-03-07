@@ -1,0 +1,10 @@
+# Managed by pi-server repo — deployed via install.sh
+
+/var/log/unattended-upgrades/*.log {
+    weekly
+    rotate 4
+    compress
+    delaycompress
+    missingok
+    notifempty
+}

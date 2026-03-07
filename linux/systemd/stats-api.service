@@ -1,0 +1,14 @@
+[Unit]
+Description=Pi Dashboard Stats API
+After=network.target
+OnFailure=ntfy-failure@%n.service
+
+[Service]
+ExecStart=/usr/bin/python3 /usr/local/bin/stats-api.py
+Restart=always
+User=www-data
+SupplementaryGroups=ntfy
+Environment=SYNCTHING_API_KEY=REDACTED_SYNCTHING_API_KEY
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,95 @@
+#!/bin/bash
+# Show backup freshness across machines
+set -euo pipefail
+
+if [ -t 1 ]; then
+  bold=$(tput bold) dim=$(tput dim) reset=$(tput sgr0)
+  green=$(tput setaf 2) yellow=$(tput setaf 3) red=$(tput setaf 1)
+else
+  bold="" dim="" reset="" green="" yellow="" red=""
+fi
+
+age_color() {
+  local days=$1 warn=${2:-2}
+  if [ "$days" -eq 0 ]; then echo "$green"
+  elif [ "$days" -le "$warn" ]; then echo "$yellow"
+  else echo "$red"
+  fi
+}
+
+human_size() {
+  if [[ "$OSTYPE" == darwin* ]]; then
+    local bytes=$1
+    if [ "$bytes" -gt 1048576 ]; then echo "$((bytes / 1048576)) MB"
+    elif [ "$bytes" -gt 1024 ]; then echo "$((bytes / 1024)) KB"
+    else echo "$bytes B"
+    fi
+  else
+    numfmt --to=iec "$1"
+  fi
+}
+
+echo "${bold}Backup Status${reset}"
+echo
+
+# Pi-server backups
+if [[ "$OSTYPE" == darwin* ]]; then
+  BACKUP_DIR="$HOME/Vault/Backups/pi-server"
+else
+  BACKUP_DIR="$HOME/backups/$(hostname)"
+fi
+
+if [ -d "$BACKUP_DIR" ]; then
+  echo "${bold}Pi backups${reset} ($BACKUP_DIR)"
+  for f in $(ls -1 "$BACKUP_DIR"/*.tar.gz 2>/dev/null | sort -r | head -5); do
+    name=$(basename "$f")
+    if [[ "$OSTYPE" == darwin* ]]; then
+      size=$(stat -f%z "$f")
+      mtime=$(stat -f%m "$f")
+    else
+      size=$(stat -c%s "$f")
+      mtime=$(stat -c%Y "$f")
+    fi
+    days=$(( ($(date +%s) - mtime) / 86400 ))
+    color=$(age_color "$days" 2)
+    echo "  ${color}${name}${reset}  $(human_size "$size")  ${dim}(${days}d ago)${reset}"
+  done
+else
+  echo "${red}Pi backup dir not found${reset}"
+fi
+
+# Mac backups (only show on Mac, or via Syncthing on Pi)
+MAC_BACKUP_DIR="$HOME/Vault/Backups/baa-macbook-m4"
+if [ -d "$MAC_BACKUP_DIR" ]; then
+  echo
+  echo "${bold}Mac backups${reset} ($MAC_BACKUP_DIR)"
+  for f in $(ls -1 "$MAC_BACKUP_DIR"/*.tar.gz 2>/dev/null | sort -r | head -5); do
+    name=$(basename "$f")
+    if [[ "$OSTYPE" == darwin* ]]; then
+      size=$(stat -f%z "$f")
+      mtime=$(stat -f%m "$f")
+    else
+      size=$(stat -c%s "$f")
+      mtime=$(stat -c%Y "$f")
+    fi
+    days=$(( ($(date +%s) - mtime) / 86400 ))
+    color=$(age_color "$days" 2)
+    echo "  ${color}${name}${reset}  $(human_size "$size")  ${dim}(${days}d ago)${reset}"
+  done
+fi
+
+# CLAUDE.md backup
+echo
+CLAUDE_BACKUP="$HOME/Vault/Backups/mac-claude/CLAUDE.md"
+if [ -f "$CLAUDE_BACKUP" ]; then
+  if [[ "$OSTYPE" == darwin* ]]; then
+    mtime=$(stat -f%m "$CLAUDE_BACKUP")
+  else
+    mtime=$(stat -c%Y "$CLAUDE_BACKUP")
+  fi
+  days=$(( ($(date +%s) - mtime) / 86400 ))
+  color=$(age_color "$days" 7)
+  echo "${bold}CLAUDE.md${reset}  ${color}${days}d ago${reset}"
+else
+  echo "${bold}CLAUDE.md${reset}  ${red}not found${reset}"
+fi

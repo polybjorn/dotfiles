@@ -1,0 +1,13 @@
+[user]
+  name = Bjørn A. Andersen
+  email = polybjorn@users.noreply.github.com
+[init]
+  defaultBranch = main
+[pull]
+  rebase = true
+[push]
+  autoSetupRemote = true
+[diff]
+  colorMoved = default
+[include]
+  path = ~/.config/git/local.gitconfig

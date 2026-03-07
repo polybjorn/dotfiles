@@ -1,0 +1,61 @@
+#!/bin/bash
+# Show Syncthing folder status
+set -euo pipefail
+
+if [ -t 1 ]; then
+  bold=$(tput bold) dim=$(tput dim) reset=$(tput sgr0)
+  green=$(tput setaf 2) yellow=$(tput setaf 3) red=$(tput setaf 1)
+else
+  bold="" dim="" reset="" green="" yellow="" red=""
+fi
+
+ST_API="http://localhost:8384"
+
+if [[ "$OSTYPE" == darwin* ]]; then
+  CONFIG_XML="$HOME/Library/Application Support/Syncthing/config.xml"
+else
+  CONFIG_XML="$HOME/.local/state/syncthing/config.xml"
+fi
+
+if [ ! -f "$CONFIG_XML" ]; then
+  echo "${red}Syncthing config not found${reset}" >&2
+  exit 1
+fi
+
+ST_KEY=$(sed -n 's/.*<apikey>\([^<]*\)<.*/\1/p' "$CONFIG_XML" 2>/dev/null)
+if [ -z "$ST_KEY" ]; then
+  echo "${red}Cannot read Syncthing API key${reset}" >&2
+  exit 1
+fi
+
+if ! curl -s --max-time 3 "$ST_API/rest/system/status" -H "X-API-Key: $ST_KEY" >/dev/null 2>&1; then
+  echo "${red}Syncthing API not responding${reset}" >&2
+  exit 1
+fi
+
+echo "${bold}Syncthing Folders${reset}"
+echo
+
+while IFS='|' read -r folder_id folder_label; do
+  STATUS=$(curl -s --max-time 5 -H "X-API-Key: $ST_KEY" \
+    "$ST_API/rest/db/status?folder=$folder_id" 2>/dev/null)
+  [ -z "$STATUS" ] && continue
+
+  _state=$(echo "$STATUS" | python3 -c "import json,sys; print(json.load(sys.stdin).get('state','unknown'))" 2>/dev/null) || continue
+  _errors=$(echo "$STATUS" | python3 -c "import json,sys; print(json.load(sys.stdin).get('errors',0))" 2>/dev/null) || _errors=0
+  _pull=$(echo "$STATUS" | python3 -c "import json,sys; print(json.load(sys.stdin).get('pullErrors',0))" 2>/dev/null) || _pull=0
+
+  if [ "$_state" = "idle" ] && [ "${_errors}" -eq 0 ] && [ "${_pull}" -eq 0 ]; then
+    icon="${green}ok${reset}"
+  elif [ "$_state" = "syncing" ]; then
+    icon="${yellow}syncing${reset}"
+  else
+    icon="${red}${_state}${reset}"
+  fi
+
+  line="  $icon  ${bold}$folder_label${reset}"
+  [ "${_errors}" -gt 0 ] && line="$line  ${red}${_errors} error(s)${reset}"
+  [ "${_pull}" -gt 0 ] && line="$line  ${red}${_pull} pull error(s)${reset}"
+  echo "$line"
+
+done < <(sed -n 's/.*folder id="\([^"]*\)".*label="\([^"]*\)".*/\1|\2/p' "$CONFIG_XML")

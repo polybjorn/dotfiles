@@ -1,0 +1,64 @@
+{
+  "jobs": [
+    {
+      "id": "health-check",
+      "name": "Health check",
+      "description": "Diagnostics & ntfy alerts",
+      "icon": "/icons/pi.svg",
+      "schedule": "every 4h"
+    },
+    {
+      "id": "pi-backup",
+      "name": "Backup",
+      "description": "DBs, configs & app data",
+      "icon": "/icons/pi.svg",
+      "schedule": "02:30"
+    },
+    {
+      "id": "apt-maintenance",
+      "name": "System updates",
+      "description": "Update, upgrade & autoremove",
+      "icon": "/icons/pi.svg",
+      "schedule": "Sun 09:00"
+    },
+    {
+      "id": "nightmode",
+      "name": "Night mode",
+      "description": "Disable Firefly & InvoicePlane",
+      "icon": "/icons/moon.svg",
+      "schedule": "01:00–07:00",
+      "timers": [
+        "nightmode-on.timer",
+        "nightmode-off.timer"
+      ]
+    },
+    {
+      "id": "freshrss-refresh",
+      "name": "Feed refresh",
+      "description": "Update feeds",
+      "icon": "/icons/freshrss.png",
+      "schedule": "*/15 07-23h"
+    },
+    {
+      "id": "freshrss-digest",
+      "name": "Release digest",
+      "description": "Self-hosted release summary",
+      "icon": "/icons/freshrss.png",
+      "schedule": "Mon 08:00"
+    },
+    {
+      "id": "freshrss-yt-favicons",
+      "name": "YT favicons",
+      "description": "Refresh channel avatars",
+      "icon": "/icons/freshrss.png",
+      "schedule": "1st 05:00"
+    },
+    {
+      "id": "rss-bridge-cache-cleanup",
+      "name": "RSS-Bridge cache",
+      "description": "Clean stale cache files",
+      "icon": "/icons/rss-bridge.png",
+      "schedule": "04:00"
+    }
+  ]
+}

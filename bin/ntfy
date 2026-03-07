@@ -1,0 +1,43 @@
+#!/bin/bash
+# Send ntfy notification from any machine
+# Usage: ntfy "Title" "Message"
+#        ntfy -p high "Alert" "Something broke"
+#        ntfy -t topic "Title" "Message"
+
+set -euo pipefail
+
+[[ -f "$HOME/.config/dotfiles/env" ]] && source "$HOME/.config/dotfiles/env"
+
+PRIORITY="default"
+TOPIC="pi-alerts"
+
+while getopts "p:t:" opt; do
+  case $opt in
+    p) PRIORITY="$OPTARG" ;;
+    t) TOPIC="$OPTARG" ;;
+    *) echo "Usage: ntfy [-p priority] [-t topic] title message" >&2; exit 1 ;;
+  esac
+done
+shift $((OPTIND - 1))
+
+if [ $# -lt 1 ]; then
+  echo "Usage: ntfy [-p priority] [-t topic] title [message]" >&2
+  exit 1
+fi
+
+TITLE="$1"
+MESSAGE="${2:-$TITLE}"
+
+if [[ "$OSTYPE" == darwin* ]]; then
+  NTFY_ENDPOINT="${NTFY_URL:-https://localhost:2587}/$TOPIC"
+else
+  NTFY_ENDPOINT="http://localhost:2586/$TOPIC"
+fi
+
+curl -s -o /dev/null \
+  -H "Title: $TITLE" \
+  -H "Priority: $PRIORITY" \
+  -d "$MESSAGE" \
+  "$NTFY_ENDPOINT"
+
+echo "Sent to $TOPIC (priority: $PRIORITY)"

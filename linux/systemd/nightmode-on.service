@@ -1,0 +1,6 @@
+[Unit]
+Description=Night mode - disable Firefly & InvoicePlane
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/nightmode.sh on firefly-iii invoiceplane

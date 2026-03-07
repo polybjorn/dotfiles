@@ -1,0 +1,6 @@
+[Unit]
+Description=Clean stale RSS-Bridge cache files
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/rss-bridge-cache-cleanup.sh
