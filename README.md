@@ -3,9 +3,8 @@
 Cross-platform dotfiles managed by
 [chezmoi](https://www.chezmoi.io/) for user configs and
 [Ansible](https://www.ansible.com/) for server infrastructure.
-
-Currently covers macOS and Raspberry Pi, with plans to add Proxmox, Arch Linux,
-and Windows as more machines join the fleet.
+Designed to scale across machines — new platforms are added via
+chezmoi templates and Ansible inventory.
 
 ## Quick start
 
@@ -67,17 +66,12 @@ Secrets are separated: chezmoi uses age encryption, Ansible uses a gitignored va
 - macOS system defaults (opt-in)
 - Photo sorting, Obsidian automation
 
-### Raspberry Pi (Ansible-managed)
+### Server infrastructure (Ansible-managed)
 - Server scripts (backup, health check, FreshRSS, nightmode, etc.)
 - Systemd services and timers
 - Nginx reverse proxy configs (Ansible Jinja2 templates)
 - Server configs (ntfy, cloudflared, unattended-upgrades, radicale, etc.)
-- Pi dashboard stats API
-
-### Planned
-- Proxmox — hypervisor management
-- Arch Linux — desktop/workstation configs
-- Windows — basic shell and git config
+- Dashboard stats API
 
 ## Scheduled tasks
 
@@ -126,7 +120,7 @@ dotfiles/                              # chezmoi source directory
 │   ├── launchd/                       # LaunchAgent plists
 │   └── defaults.sh                    # macOS system preferences
 ├── linux/
-│   ├── scripts/                       # Pi server scripts → /usr/local/bin/
+│   ├── scripts/                       # server scripts → /usr/local/bin/
 │   ├── systemd/                       # systemd units + overrides
 │   ├── config/                        # server configs (apt, logrotate, etc.)
 │   └── ansible/

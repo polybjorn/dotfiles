@@ -9,8 +9,10 @@ dotfiles.env.example
 macos
 linux
 p10k
+.github
+.claude
 
-# macOS-only files — skip on Linux
+# macOS-only files — skip on Linux/Windows
 {{ if ne .chezmoi.os "darwin" }}
 .hammerspoon
 .hammerspoon/**
@@ -19,4 +21,10 @@ p10k
 .local/bin/stats-push.sh
 .local/bin/photo-sort.sh
 .local/bin/obsidian-*
+{{ end }}
+
+# Unix-only files — skip on Windows
+{{ if eq .chezmoi.os "windows" }}
+.local
+.local/**
 {{ end }}

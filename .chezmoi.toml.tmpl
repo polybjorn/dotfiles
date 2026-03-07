@@ -6,3 +6,4 @@ encryption = "age"
 [data]
   is_mac = {{ eq .chezmoi.os "darwin" }}
   is_linux = {{ eq .chezmoi.os "linux" }}
+  is_windows = {{ eq .chezmoi.os "windows" }}
