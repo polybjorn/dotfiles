@@ -3,11 +3,11 @@
 <plist version="1.0">
 <dict>
   <key>Label</key>
-  <string>com.bjanda.brew-maintenance</string>
+  <string>com.bjanda.pkg-maintenance</string>
   <key>ProgramArguments</key>
   <array>
     <string>/bin/bash</string>
-    <string>__HOME__/.local/bin/brew-maintenance.sh</string>
+    <string>__HOME__/.local/bin/pkg-maintenance.sh</string>
   </array>
   <key>StartCalendarInterval</key>
   <dict>
@@ -19,8 +19,8 @@
     <integer>0</integer>
   </dict>
   <key>StandardOutPath</key>
-  <string>/tmp/brew-maintenance.log</string>
+  <string>/tmp/pkg-maintenance.log</string>
   <key>StandardErrorPath</key>
-  <string>/tmp/brew-maintenance.log</string>
+  <string>/tmp/pkg-maintenance.log</string>
 </dict>
 </plist>

@@ -1,5 +1,5 @@
 #!/bin/bash
-# Mac health check — alerts via ntfy only when something is wrong
+# Health check — alerts via ntfy only when something is wrong
 
 [[ -f "$HOME/.config/dotfiles/env" ]] && source "$HOME/.config/dotfiles/env"
 
@@ -64,10 +64,10 @@ DEAD_JOBS=""
 for label in \
   com.bjanda.backup-claude \
   com.bjanda.photo-sort \
-  com.bjanda.mac-backup \
-  com.bjanda.mac-health-check \
-  com.bjanda.mac-stats-push \
-  com.bjanda.brew-maintenance \
+  com.bjanda.backup \
+  com.bjanda.health-check \
+  com.bjanda.stats-push \
+  com.bjanda.pkg-maintenance \
   com.bjanda.obsidian-weekly-note \
   com.bjanda.obsidian-new-year; do
   if ! launchctl list "$label" &>/dev/null; then
@@ -97,7 +97,7 @@ if ssh -o ConnectTimeout=5 -o BatchMode=yes "$PI_HOST" true 2>/dev/null; then
 
   # Check key Pi timers ran recently
   PI_STALE=""
-  for timer in health-check pi-backup freshrss-refresh; do
+  for timer in health-check backup freshrss-refresh; do
     LAST=$(ssh "$PI_HOST" "systemctl show ${timer}.timer -p LastTriggerUSec --value 2>/dev/null" 2>/dev/null)
     if [ -z "$LAST" ] || [ "$LAST" = "n/a" ]; then
       PI_STALE="${PI_STALE}- ${timer}.timer (never triggered)\n"

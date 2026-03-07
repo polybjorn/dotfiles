@@ -1,5 +1,5 @@
 [Unit]
-Description=Daily Pi server backup
+Description=Daily server backup
 
 [Timer]
 OnCalendar=*-*-* 02:30:00

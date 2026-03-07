@@ -1,5 +1,5 @@
 #!/bin/bash
-# Collect Mac stats and push to Pi dashboard
+# Collect stats and push to Pi dashboard
 
 [[ -f "$HOME/.config/dotfiles/env" ]] && source "$HOME/.config/dotfiles/env"
 

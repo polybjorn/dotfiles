@@ -1,0 +1,8 @@
+[Unit]
+Description=Weekly package update, upgrade, and cleanup
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/home/admin/.local/bin/pkg-maintenance.sh

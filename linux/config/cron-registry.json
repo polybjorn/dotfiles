@@ -8,14 +8,14 @@
       "schedule": "every 4h"
     },
     {
-      "id": "pi-backup",
+      "id": "backup",
       "name": "Backup",
       "description": "DBs, configs & app data",
       "icon": "/icons/pi.svg",
       "schedule": "02:30"
     },
     {
-      "id": "apt-maintenance",
+      "id": "pkg-maintenance",
       "name": "System updates",
       "description": "Update, upgrade & autoremove",
       "icon": "/icons/pi.svg",

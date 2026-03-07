@@ -3,22 +3,22 @@
 <plist version="1.0">
 <dict>
   <key>Label</key>
-  <string>com.bjanda.mac-backup</string>
+  <string>com.bjanda.health-check</string>
   <key>ProgramArguments</key>
   <array>
     <string>/bin/bash</string>
-    <string>__HOME__/.local/bin/mac-backup.sh</string>
+    <string>__HOME__/.local/bin/health-check.sh</string>
   </array>
   <key>StartCalendarInterval</key>
   <dict>
     <key>Hour</key>
-    <integer>3</integer>
+    <integer>8</integer>
     <key>Minute</key>
     <integer>0</integer>
   </dict>
   <key>StandardOutPath</key>
-  <string>/tmp/mac-backup.log</string>
+  <string>/tmp/health-check.log</string>
   <key>StandardErrorPath</key>
-  <string>/tmp/mac-backup.log</string>
+  <string>/tmp/health-check.log</string>
 </dict>
 </plist>

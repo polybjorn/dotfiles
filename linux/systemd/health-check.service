@@ -1,6 +1,6 @@
 [Unit]
-Description=Pi health check with ntfy alerts
+Description=Health check with ntfy alerts
 
 [Service]
 Type=oneshot
-ExecStart=/usr/local/bin/pi-health-check.sh
+ExecStart=/usr/local/bin/health-check.sh

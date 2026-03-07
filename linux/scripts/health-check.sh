@@ -1,5 +1,5 @@
 #!/bin/bash
-# Pi health check — alerts via ntfy only when something is wrong
+# Health check — alerts via ntfy only when something is wrong
 # All checks are read-only and near-instant (<1s total)
 
 NTFY_URL="http://localhost:2586/pi-alerts"

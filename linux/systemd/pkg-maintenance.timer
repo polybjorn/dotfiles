@@ -1,5 +1,5 @@
 [Unit]
-Description=Run apt maintenance weekly on Sunday
+Description=Run package maintenance weekly on Sunday
 
 [Timer]
 OnCalendar=Sun 09:00

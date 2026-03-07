@@ -1,6 +1,0 @@
-[Unit]
-Description=Pi server backup
-
-[Service]
-Type=oneshot
-ExecStart=/usr/local/bin/pi-backup.sh

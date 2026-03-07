@@ -1,5 +1,5 @@
 #!/bin/bash
-# Pi server backup — dumps databases, configs, and app data into a dated tarball
+# Server backup — dumps databases, configs, and app data into a dated tarball
 # Stored locally + copied to Syncthing for off-device redundancy
 # Sends ntfy alert on failure only
 

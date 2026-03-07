@@ -102,7 +102,7 @@ else
 fi
 
 # ── Sudoers for stats-api timer control ───────────────────
-TIMERS="pi-backup.timer health-check.timer freshrss-refresh.timer freshrss-digest.timer nightmode-on.timer nightmode-off.timer apt-maintenance.timer wifi-watchdog.timer rss-bridge-cache-cleanup.timer freshrss-yt-favicons.timer"
+TIMERS="backup.timer health-check.timer freshrss-refresh.timer freshrss-digest.timer nightmode-on.timer nightmode-off.timer pkg-maintenance.timer wifi-watchdog.timer rss-bridge-cache-cleanup.timer freshrss-yt-favicons.timer"
 {
   for t in $TIMERS; do
     echo "www-data ALL=(root) NOPASSWD: /usr/bin/systemctl enable $t"

@@ -37,13 +37,13 @@ ansible-playbook linux/ansible/site.yml
 
 ### macOS
 - Hammerspoon window management
-- LaunchAgent scheduled tasks (backup, health check, brew maintenance)
+- LaunchAgent scheduled tasks (backup, health check, package maintenance)
 - Homebrew Brewfile (auto-installed via chezmoi)
 - macOS system defaults (opt-in)
 - Photo sorting, Obsidian automation
 
 ### Linux (Raspberry Pi)
-- Server scripts (backup, health check, apt maintenance, FreshRSS, etc.)
+- Server scripts (backup, health check, package maintenance, FreshRSS, etc.)
 - Systemd services and timers
 - Nginx reverse proxy configs
 - Server configs (ntfy, cloudflared, unattended-upgrades, radicale, etc.)
@@ -55,10 +55,10 @@ ansible-playbook linux/ansible/site.yml
 | Agent | Schedule | Purpose |
 |---|---|---|
 | backup-claude | On file change | CLAUDE.md backup to Vault |
-| mac-backup | 03:00 daily | Config tarball to Vault |
-| mac-health-check | 08:00 daily | System diagnostics, ntfy alerts |
-| mac-stats-push | Every 5 min | Push stats to Pi dashboard |
-| brew-maintenance | Sun 09:00 | Homebrew update/cleanup |
+| backup | 03:00 daily | Config tarball to Vault |
+| health-check | 08:00 daily | System diagnostics, ntfy alerts |
+| stats-push | Every 5 min | Push stats to Pi dashboard |
+| pkg-maintenance | Sun 09:00 | Package update/cleanup |
 | obsidian-weekly-note | Mon 00:05 | Generate weekly planning note |
 
 ### Linux (systemd timers)
@@ -66,8 +66,8 @@ ansible-playbook linux/ansible/site.yml
 | Timer | Schedule | Purpose |
 |---|---|---|
 | health-check | Every 4h | System diagnostics, ntfy alerts |
-| pi-backup | 02:30 daily | Full server backup |
-| apt-maintenance | Sun 09:00 | apt update/upgrade/clean |
+| backup | 02:30 daily | Full server backup |
+| pkg-maintenance | Sun 09:00 | Package update/cleanup |
 | nightmode | 01:00-07:00 | Disable/enable nginx sites |
 | freshrss-refresh | */15 07-23h | FreshRSS feed refresh |
 | freshrss-digest | Mon 08:00 | Weekly release/feed report |

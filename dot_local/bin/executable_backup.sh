@@ -1,5 +1,5 @@
 #!/bin/bash
-# Mac backup — configs, scripts, and package lists into a dated tarball
+# Backup — configs, scripts, and package lists into a dated tarball
 # Stored in Syncthing for off-device redundancy
 # Sends ntfy alert on failure only
 

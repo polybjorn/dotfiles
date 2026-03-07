@@ -28,8 +28,10 @@ dotfiles/                              # chezmoi source directory
 │   ├── executable_ntfy                # cross-platform
 │   ├── executable_backup-status       # cross-platform
 │   ├── executable_syncthing-status    # cross-platform
-│   ├── executable_mac-*.sh            # macOS only (.chezmoiignore)
-│   ├── executable_brew-maintenance.sh # macOS only
+│   ├── executable_pkg-maintenance.sh   # cross-platform (brew/apt)
+│   ├── executable_backup.sh           # macOS only (.chezmoiignore)
+│   ├── executable_health-check.sh     # macOS only
+│   ├── executable_stats-push.sh       # macOS only
 │   ├── executable_photo-sort.sh       # macOS only
 │   └── executable_obsidian-*.sh/py    # macOS only
 ├── run_after_10-p10k.sh.tmpl         # deploy platform-specific p10k config
@@ -101,10 +103,10 @@ Dry-run: `ansible-playbook linux/ansible/site.yml --check --diff`
 | Agent | Schedule | Script |
 |---|---|---|
 | backup-claude | WatchPaths | /bin/cp (no script) |
-| mac-backup | 03:00 daily | mac-backup.sh |
-| mac-health-check | 08:00 daily | mac-health-check.sh |
-| mac-stats-push | Every 5 min | mac-stats-push.sh |
-| brew-maintenance | Sun 09:00 | brew-maintenance.sh |
+| backup | 03:00 daily | backup.sh |
+| health-check | 08:00 daily | health-check.sh |
+| stats-push | Every 5 min | stats-push.sh |
+| pkg-maintenance | Sun 09:00 | pkg-maintenance.sh |
 | obsidian-weekly-note | Mon 00:05 | obsidian-weekly-note.py |
 | obsidian-new-year | Jan 1 09:00 | obsidian-new-year.sh |
 | photo-sort | Every 30 min | photo-sort.sh |
@@ -113,9 +115,9 @@ Dry-run: `ansible-playbook linux/ansible/site.yml --check --diff`
 
 | Timer | Schedule | Script |
 |---|---|---|
-| health-check | Every 4h | pi-health-check.sh |
-| pi-backup | 02:30 daily | pi-backup.sh |
-| apt-maintenance | Sun 09:00 | apt-maintenance.sh |
+| health-check | Every 4h | health-check.sh |
+| backup | 02:30 daily | backup.sh |
+| pkg-maintenance | Sun 09:00 | pkg-maintenance.sh (chezmoi) |
 | nightmode-on/off | 01:00 / 07:00 | nightmode.sh |
 | freshrss-refresh | */15 07-23h | (PHP actualize) |
 | freshrss-digest | Mon 08:00 | freshrss-digest.sh |

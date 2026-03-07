@@ -9,13 +9,13 @@
     user_home: /home/admin
 
     timers:
-      - pi-backup.timer
+      - backup.timer
       - health-check.timer
       - freshrss-refresh.timer
       - freshrss-digest.timer
       - nightmode-on.timer
       - nightmode-off.timer
-      - apt-maintenance.timer
+      - pkg-maintenance.timer
       - wifi-watchdog.timer
       - rss-bridge-cache-cleanup.timer
       - freshrss-yt-favicons.timer

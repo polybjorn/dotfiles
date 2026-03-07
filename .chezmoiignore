@@ -14,8 +14,9 @@ p10k
 {{ if ne .chezmoi.os "darwin" }}
 .hammerspoon
 .hammerspoon/**
-.local/bin/mac-*
-.local/bin/brew-maintenance.sh
+.local/bin/backup.sh
+.local/bin/health-check.sh
+.local/bin/stats-push.sh
 .local/bin/photo-sort.sh
 .local/bin/obsidian-*
 {{ end }}
