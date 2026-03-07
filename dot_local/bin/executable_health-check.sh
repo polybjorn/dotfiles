@@ -85,6 +85,17 @@ if [ -n "$DEAD_JOBS" ]; then
     "$(echo -e "Unloaded jobs on $HOST:\n$DEAD_JOBS")"
 fi
 
+# --- Git pre-commit hook ---
+HOOK="$HOME/.config/git/hooks/pre-commit"
+PII="$HOME/.config/git/pii-patterns"
+if [ ! -x "$HOOK" ]; then
+  alert "high" "Pre-commit Hook Missing" "lock,warning" \
+    "Global pre-commit hook not found or not executable on $HOST"
+elif [ ! -f "$PII" ]; then
+  alert "default" "PII Patterns Missing" "lock,info" \
+    "PII patterns file not found on $HOST — run chezmoi apply"
+fi
+
 # --- Mac backup freshness ---
 BACKUP_DIR="$HOME/Vault/Backups/$HOST"
 HOUR=$(date +%H)
