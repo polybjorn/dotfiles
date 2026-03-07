@@ -19,8 +19,8 @@
     <integer>0</integer>
   </dict>
   <key>StandardOutPath</key>
-  <string>/tmp/pkg-maintenance.log</string>
+  <string>__HOME__/Library/Logs/pkg-maintenance.log</string>
   <key>StandardErrorPath</key>
-  <string>/tmp/pkg-maintenance.log</string>
+  <string>__HOME__/Library/Logs/pkg-maintenance.log</string>
 </dict>
 </plist>

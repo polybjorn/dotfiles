@@ -19,8 +19,8 @@
     <integer>5</integer>
   </dict>
   <key>StandardOutPath</key>
-  <string>/tmp/obsidian-weekly-note-stdout.log</string>
+  <string>__HOME__/Library/Logs/obsidian-weekly-note.log</string>
   <key>StandardErrorPath</key>
-  <string>/tmp/obsidian-weekly-note-stderr.log</string>
+  <string>__HOME__/Library/Logs/obsidian-weekly-note.log</string>
 </dict>
 </plist>

@@ -17,8 +17,8 @@
     <integer>30</integer>
   </dict>
   <key>StandardOutPath</key>
-  <string>/tmp/backup-verify.log</string>
+  <string>__HOME__/Library/Logs/backup-verify.log</string>
   <key>StandardErrorPath</key>
-  <string>/tmp/backup-verify.log</string>
+  <string>__HOME__/Library/Logs/backup-verify.log</string>
 </dict>
 </plist>
