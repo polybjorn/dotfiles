@@ -1,0 +1,20 @@
+# -- Hosts -----------------------------------------------------
+Host pi-server
+  User admin
+  IdentityFile ~/.ssh/id_ed25519
+  IdentitiesOnly yes
+
+Host arch-server
+  User admin
+  IdentityFile ~/.ssh/id_ed25519
+  IdentitiesOnly yes
+
+# -- Defaults --------------------------------------------------
+Host *
+  AddKeysToAgent yes
+  IdentitiesOnly yes
+  ServerAliveInterval 60
+  ServerAliveCountDown 3
+  ControlMaster auto
+  ControlPath ~/.ssh/sockets/%r@%h-%p
+  ControlPersist 10m

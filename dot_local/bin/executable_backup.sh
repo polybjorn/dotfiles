@@ -61,8 +61,9 @@ if [ -d "$HOME/.claude/memory" ]; then
   cp -a "$HOME/.claude/memory/"* "$WORK_DIR/configs/claude-memory/" 2>/dev/null || true
 fi
 
-# --- SSH config & public key ---
+# --- SSH keys & config ---
 cp "$HOME/.ssh/config" "$WORK_DIR/configs/ssh-config" 2>/dev/null || true
+cp "$HOME/.ssh/id_ed25519" "$WORK_DIR/configs/ssh-key" 2>/dev/null || true
 cp "$HOME/.ssh/id_ed25519.pub" "$WORK_DIR/configs/ssh-pubkey.pub" 2>/dev/null || true
 
 # --- GitHub CLI ---
