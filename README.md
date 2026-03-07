@@ -86,6 +86,8 @@ Secrets are separated: chezmoi uses age encryption, Ansible uses a gitignored va
 | pkg-maintenance | Sun 09:00 | Package update/cleanup |
 | obsidian-new-year | Jan 1 09:00 | Create yearly/quarterly/monthly note structure |
 | obsidian-weekly-note | Mon 00:05 | Generate weekly planning note |
+| vault-maintenance-weekly | Mon 01:00 | Orphan fixer + broken link check |
+| vault-maintenance-monthly | 1st 02:00 | Frontmatter audit + tag scan |
 
 ### Linux (systemd timers)
 

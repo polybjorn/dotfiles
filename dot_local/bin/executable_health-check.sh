@@ -70,7 +70,11 @@ for label in \
   com.bjanda.pkg-maintenance \
   com.bjanda.backup-verify \
   com.bjanda.obsidian-weekly-note \
-  com.bjanda.obsidian-new-year; do
+  com.bjanda.obsidian-new-year \
+  ; do
+  # Paused until vault cleanup is done:
+  # com.bjanda.vault-maintenance-weekly
+  # com.bjanda.vault-maintenance-monthly
   if ! launchctl list "$label" &>/dev/null; then
     DEAD_JOBS="${DEAD_JOBS}- $label\n"
   fi

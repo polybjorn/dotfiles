@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.bjanda.vault-maintenance-weekly</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/bin/zsh</string>
+    <string>-c</string>
+    <string>/usr/bin/python3 __HOME__/Vault/Obsidian/Extras/Scripts/vault-maintenance.py orphans; /usr/bin/python3 __HOME__/Vault/Obsidian/Extras/Scripts/vault-maintenance.py links</string>
+  </array>
+  <key>StartCalendarInterval</key>
+  <dict>
+    <key>Weekday</key>
+    <integer>1</integer>
+    <key>Hour</key>
+    <integer>1</integer>
+    <key>Minute</key>
+    <integer>0</integer>
+  </dict>
+  <key>StandardOutPath</key>
+  <string>__HOME__/Library/Logs/vault-maintenance.log</string>
+  <key>StandardErrorPath</key>
+  <string>__HOME__/Library/Logs/vault-maintenance.log</string>
+</dict>
+</plist>
