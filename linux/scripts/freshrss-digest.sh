@@ -167,7 +167,7 @@ if [ -f "$REPO_OPML" ]; then
         drift="FreshRSS feeds differ from repo OPML:"
         [ -n "$added" ] && drift+=$'\n\nAdded:\n'"$(echo "$added" | sed 's/^/+ /')"
         [ -n "$removed" ] && drift+=$'\n\nRemoved:\n'"$(echo "$removed" | sed 's/^/- /')"
-        drift+=$'\n\nUpdate repo: cd ~/pi-server && sudo -u www-data php /var/www/FreshRSS/cli/export-opml-for-user.php --user freshrss > config/freshrss-feeds.opml'
+        drift+=$'\n\nUpdate repo: cd ~/repositories/dotfiles && sudo -u www-data php /var/www/FreshRSS/cli/export-opml-for-user.php --user freshrss > linux/config/freshrss-feeds.opml'
         curl -s -o /dev/null \
             -H "Title: FreshRSS feed drift detected" \
             -H "Tags: warning" \

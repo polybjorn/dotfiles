@@ -163,6 +163,12 @@ EOF
     cat > "$HOME/.config/git/local.gitconfig" << 'EOF'
 [core]
   pager = batcat --paging=always
+[credential "https://github.com"]
+  helper =
+  helper = !/usr/bin/gh auth git-credential
+[credential "https://gist.github.com"]
+  helper =
+  helper = !/usr/bin/gh auth git-credential
 EOF
     ok "Generated Linux git config"
     ;;
