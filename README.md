@@ -84,6 +84,7 @@ Secrets are separated: chezmoi uses age encryption, Ansible uses a gitignored va
 | health-check | 08:00 daily | System diagnostics, ntfy alerts |
 | stats-push | Every 5 min | Push stats to Pi dashboard |
 | pkg-maintenance | Sun 09:00 | Package update/cleanup |
+| obsidian-new-year | Jan 1 09:00 | Create yearly/quarterly/monthly note structure |
 | obsidian-weekly-note | Mon 00:05 | Generate weekly planning note |
 
 ### Linux (systemd timers)
