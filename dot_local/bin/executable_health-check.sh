@@ -81,6 +81,22 @@ if [ -n "$DEAD_JOBS" ]; then
     "$(echo -e "Unloaded jobs on $HOST:\n$DEAD_JOBS")"
 fi
 
+# --- Mac backup freshness ---
+BACKUP_DIR="$HOME/Vault/Backups/$HOST"
+HOUR=$(date +%H)
+if [ "$HOUR" -ge 4 ]; then
+  EXPECTED_BACKUP="$BACKUP_DIR/$(date +%Y-%m-%d).tar.gz"
+else
+  EXPECTED_BACKUP="$BACKUP_DIR/$(date -v-1d +%Y-%m-%d).tar.gz"
+fi
+if [ ! -f "$EXPECTED_BACKUP" ]; then
+  alert "high" "Mac Backup Missing" "file_folder,warning" \
+    "Expected backup not found: $(basename "$EXPECTED_BACKUP") on $HOST"
+elif [ "$(stat -f%z "$EXPECTED_BACKUP")" -lt 10240 ]; then
+  alert "high" "Mac Backup Too Small" "file_folder,warning" \
+    "Backup $(basename "$EXPECTED_BACKUP") is under 10KB on $HOST"
+fi
+
 # --- Syncthing folder health ---
 ST_API="http://localhost:8384"
 ST_CONFIG="$HOME/Library/Application Support/Syncthing/config.xml"

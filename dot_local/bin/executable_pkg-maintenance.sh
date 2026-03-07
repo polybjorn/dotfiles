@@ -58,6 +58,13 @@ if [[ "$OSTYPE" == darwin* ]]; then
   echo "Cleaning up..."
   $BREW cleanup --prune=7 -s --quiet 2>/dev/null || true
 
+  # --- Trim log files ---
+  for logfile in "$HOME"/Library/Logs/{backup,backup-verify,health-check,pkg-maintenance,photo-sort,stats-push,obsidian-new-year,obsidian-weekly-note}.log; do
+    if [ -f "$logfile" ] && [ "$(wc -l < "$logfile")" -gt 500 ]; then
+      tail -200 "$logfile" > "$logfile.tmp" && mv "$logfile.tmp" "$logfile"
+    fi
+  done
+
   # --- Re-dump Brewfile ---
   echo "Updating Brewfile..."
   $BREW bundle dump --file="$REPO_BREWFILE" --force --quiet
