@@ -3,24 +3,22 @@
 <plist version="1.0">
 <dict>
   <key>Label</key>
-  <string>com.bjanda.obsidian-weekly-note</string>
+  <string>local.backup-verify</string>
   <key>ProgramArguments</key>
   <array>
-    <string>/usr/bin/python3</string>
-    <string>__HOME__/Vault/Obsidian/Extras/Scripts/obsidian-weekly-note.py</string>
+    <string>/bin/bash</string>
+    <string>__HOME__/.local/bin/backup-verify.sh</string>
   </array>
   <key>StartCalendarInterval</key>
   <dict>
-    <key>Weekday</key>
-    <integer>1</integer>
     <key>Hour</key>
-    <integer>0</integer>
+    <integer>3</integer>
     <key>Minute</key>
-    <integer>5</integer>
+    <integer>30</integer>
   </dict>
   <key>StandardOutPath</key>
-  <string>__HOME__/Library/Logs/obsidian-weekly-note.log</string>
+  <string>__HOME__/Library/Logs/backup-verify.log</string>
   <key>StandardErrorPath</key>
-  <string>__HOME__/Library/Logs/obsidian-weekly-note.log</string>
+  <string>__HOME__/Library/Logs/backup-verify.log</string>
 </dict>
 </plist>

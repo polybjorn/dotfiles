@@ -62,19 +62,19 @@ fi
 # --- LaunchAgent jobs ---
 DEAD_JOBS=""
 for label in \
-  com.bjanda.backup-claude \
-  com.bjanda.photo-sort \
-  com.bjanda.backup \
-  com.bjanda.health-check \
-  com.bjanda.stats-push \
-  com.bjanda.pkg-maintenance \
-  com.bjanda.backup-verify \
-  com.bjanda.obsidian-weekly-note \
-  com.bjanda.obsidian-new-year \
+  local.backup-claude \
+  local.photo-sort \
+  local.backup \
+  local.health-check \
+  local.stats-push \
+  local.pkg-maintenance \
+  local.backup-verify \
+  local.obsidian-weekly-note \
+  local.obsidian-new-year \
   ; do
   # Paused until vault cleanup is done:
-  # com.bjanda.vault-maintenance-weekly
-  # com.bjanda.vault-maintenance-monthly
+  # local.vault-maintenance-weekly
+  # local.vault-maintenance-monthly
   if ! launchctl list "$label" &>/dev/null; then
     DEAD_JOBS="${DEAD_JOBS}- $label\n"
   fi

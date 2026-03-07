@@ -83,7 +83,7 @@ fi
 
 # --- LaunchAgents ---
 echo "Copying LaunchAgents..."
-cp "$HOME/Library/LaunchAgents/com.bjanda."*.plist "$WORK_DIR/launchd/" 2>/dev/null || true
+cp "$HOME/Library/LaunchAgents/local."*.plist "$WORK_DIR/launchd/" 2>/dev/null || true
 
 # --- Syncthing config ---
 echo "Copying Syncthing config..."

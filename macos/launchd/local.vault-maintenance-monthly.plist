@@ -3,19 +3,19 @@
 <plist version="1.0">
 <dict>
   <key>Label</key>
-  <string>com.bjanda.vault-maintenance-weekly</string>
+  <string>local.vault-maintenance-monthly</string>
   <key>ProgramArguments</key>
   <array>
     <string>/bin/zsh</string>
     <string>-c</string>
-    <string>/usr/bin/python3 __HOME__/Vault/Obsidian/Extras/Scripts/vault-maintenance.py orphans; /usr/bin/python3 __HOME__/Vault/Obsidian/Extras/Scripts/vault-maintenance.py links</string>
+    <string>/usr/bin/python3 __HOME__/Vault/Obsidian/Extras/Scripts/vault-maintenance.py frontmatter; /usr/bin/python3 __HOME__/Vault/Obsidian/Extras/Scripts/vault-maintenance.py tags</string>
   </array>
   <key>StartCalendarInterval</key>
   <dict>
-    <key>Weekday</key>
+    <key>Day</key>
     <integer>1</integer>
     <key>Hour</key>
-    <integer>1</integer>
+    <integer>2</integer>
     <key>Minute</key>
     <integer>0</integer>
   </dict>
