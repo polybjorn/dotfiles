@@ -1,0 +1,6 @@
+[Unit]
+Description=Weekly self-hosted release digest from FreshRSS
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/freshrss-digest.sh

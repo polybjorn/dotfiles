@@ -1,0 +1,8 @@
+[Unit]
+Description=WiFi watchdog — reconnect if WiFi drops
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/wifi-watchdog.sh
