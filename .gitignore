@@ -6,3 +6,17 @@ dotfiles.env
 *.backup
 linux/config/radicale/users
 linux/ansible/vars/private.yml
+
+# secrets and credentials
+*.pem
+*.key
+*.p12
+*.pfx
+*.kdbx
+id_rsa
+id_ed25519
+.htpasswd
+credentials.json
+service-account*.json
+*.sqlite
+*.db
