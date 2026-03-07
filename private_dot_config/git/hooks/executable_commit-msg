@@ -1,0 +1,21 @@
+#!/bin/sh
+# Global commit-msg hook: enforce conventional commit format
+
+msg=$(head -1 "$1")
+
+# Allow merge and revert commits
+case "$msg" in
+  Merge*|Revert*) exit 0 ;;
+esac
+
+# Conventional commit pattern: type(scope): message or type: message
+if ! echo "$msg" | grep -qE '^(feat|fix|chore|docs|style|refactor|test|ci|build|perf|revert)(\(.+\))?: .+'; then
+  echo "Commit message must follow conventional commits format:"
+  echo "  type: description"
+  echo "  type(scope): description"
+  echo ""
+  echo "Types: feat fix chore docs style refactor test ci build perf revert"
+  echo ""
+  echo "Got: $msg"
+  exit 1
+fi
