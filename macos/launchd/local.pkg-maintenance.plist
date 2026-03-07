@@ -3,22 +3,24 @@
 <plist version="1.0">
 <dict>
   <key>Label</key>
-  <string>com.bjanda.backup</string>
+  <string>local.pkg-maintenance</string>
   <key>ProgramArguments</key>
   <array>
     <string>/bin/bash</string>
-    <string>__HOME__/.local/bin/backup.sh</string>
+    <string>__HOME__/.local/bin/pkg-maintenance.sh</string>
   </array>
   <key>StartCalendarInterval</key>
   <dict>
+    <key>Weekday</key>
+    <integer>0</integer>
     <key>Hour</key>
-    <integer>3</integer>
+    <integer>9</integer>
     <key>Minute</key>
     <integer>0</integer>
   </dict>
   <key>StandardOutPath</key>
-  <string>__HOME__/Library/Logs/backup.log</string>
+  <string>__HOME__/Library/Logs/pkg-maintenance.log</string>
   <key>StandardErrorPath</key>
-  <string>__HOME__/Library/Logs/backup.log</string>
+  <string>__HOME__/Library/Logs/pkg-maintenance.log</string>
 </dict>
 </plist>

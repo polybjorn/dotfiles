@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
   <key>Label</key>
-  <string>com.bjanda.health-check</string>
+  <string>local.health-check</string>
   <key>ProgramArguments</key>
   <array>
     <string>/bin/bash</string>

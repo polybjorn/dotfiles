@@ -109,7 +109,7 @@ case "$OS" in
 
     # Load LaunchAgents
     info "Loading LaunchAgents..."
-    for plist in "$HOME/Library/LaunchAgents"/com.bjanda.*.plist; do
+    for plist in "$HOME/Library/LaunchAgents"/local.*.plist; do
       [ -f "$plist" ] || continue
       name=$(basename "$plist")
       launchctl bootout "gui/$(id -u)" "$plist" 2>/dev/null || true

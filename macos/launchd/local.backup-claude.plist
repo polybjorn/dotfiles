@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
   <key>Label</key>
-  <string>com.bjanda.backup-claude</string>
+  <string>local.backup-claude</string>
   <key>WatchPaths</key>
   <array>
     <string>__HOME__/.claude/CLAUDE.md</string>
