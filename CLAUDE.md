@@ -18,7 +18,10 @@ dotfiles/                              # chezmoi source directory
 │   │   └── aliases.zsh               # → ~/.config/zsh/aliases.zsh
 │   ├── git/
 │   │   ├── ignore                     # → ~/.config/git/ignore
-│   │   └── local.gitconfig.tmpl       # → ~/.config/git/local.gitconfig (bat/gh paths)
+│   │   ├── local.gitconfig.tmpl       # → ~/.config/git/local.gitconfig (bat/gh paths)
+│   │   ├── pii-patterns.tmpl          # → ~/.config/git/pii-patterns (PII scan patterns)
+│   │   └── hooks/
+│   │       └── executable_pre-commit  # → ~/.config/git/hooks/pre-commit (gitleaks + PII)
 │   └── dotfiles/
 │       └── create_env                 # → ~/.config/dotfiles/env (create if missing)
 ├── private_dot_hammerspoon/           # macOS only (.chezmoiignore)
@@ -94,7 +97,10 @@ Dry-run: `ansible-playbook linux/ansible/site.yml --check --diff`
 
 - chezmoi manages `$HOME` files with templates for platform branching
 - Ansible manages system-level files (`/etc/`, `/usr/local/bin/`)
-- LaunchAgent plists: COPIED (launchd removes symlinks on unload)
+- LaunchAgent plists use `__HOME__` placeholder, substituted with `$HOME` at deploy time
+- Global pre-commit hook: gitleaks (secrets) + PII scan (patterns from chezmoi template)
+- Health-check validates hook and PII patterns file are deployed
+- Never hardcode home paths in committed files — use `__HOME__`, `$HOME`, or chezmoi templates
 - Systemd units: COPIED (systemctl disable deletes symlinks)
 - Private values sourced from `~/.config/dotfiles/env`
 - age encryption available for secrets (key at `~/.config/chezmoi/key.txt`)
@@ -112,6 +118,8 @@ Dry-run: `ansible-playbook linux/ansible/site.yml --check --diff`
 | obsidian-weekly-note | Mon 00:05 | obsidian-weekly-note.py |
 | obsidian-new-year | Jan 1 09:00 | obsidian-new-year.sh |
 | photo-sort | Every 30 min | photo-sort.sh |
+| vault-maintenance-weekly | Mon 01:00 | vault-maintenance.py (paused) |
+| vault-maintenance-monthly | 1st 02:00 | vault-maintenance.py (paused) |
 
 ## Pi systemd timers
 

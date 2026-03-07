@@ -58,6 +58,9 @@ Secrets are separated: chezmoi uses age encryption, Ansible uses a gitignored va
 - Cross-platform aliases with `$OSTYPE` branching
 - Cross-platform scripts: pkg-maintenance, ntfy, backup-status, syncthing-status
 - XDG Base Directory layout
+- Global git pre-commit hook: gitleaks secret scan + PII pattern scan
+  - PII patterns file templated per-machine via chezmoi
+  - Health-check validates hook is deployed
 
 ### macOS
 - Hammerspoon window management (MiroWindowsManager)
