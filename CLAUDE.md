@@ -35,8 +35,7 @@ dotfiles/                              # chezmoi source directory
 │   ├── executable_backup.sh           # macOS only (.chezmoiignore)
 │   ├── executable_health-check.sh     # macOS only
 │   ├── executable_stats-push.sh       # macOS only
-│   ├── executable_photo-sort.sh       # macOS only
-│   └── executable_obsidian-*.sh/py    # macOS only
+│   └── executable_photo-sort.sh       # macOS only
 ├── run_after_10-p10k.sh.tmpl         # deploy platform-specific p10k config
 ├── run_after_20-launchagents.sh.tmpl  # macOS: copy plists + load
 ├── run_after_30-brewfile.sh.tmpl      # macOS: brew bundle

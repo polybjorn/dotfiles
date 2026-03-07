@@ -67,7 +67,7 @@ Secrets are separated: chezmoi uses age encryption, Ansible uses a gitignored va
 - LaunchAgent scheduled tasks
 - Homebrew Brewfile (auto-installed via chezmoi `run_after_`)
 - macOS system defaults (opt-in)
-- Photo sorting, Obsidian automation
+- Photo sorting
 
 ### Server infrastructure (Ansible-managed)
 - Server scripts (backup, health check, FreshRSS, nightmode, etc.)
