@@ -21,9 +21,9 @@
     <integer>0</integer>
   </dict>
   <key>StandardOutPath</key>
-  <string>/tmp/obsidian-new-year.log</string>
+  <string>__HOME__/Library/Logs/obsidian-new-year.log</string>
   <key>StandardErrorPath</key>
-  <string>/tmp/obsidian-new-year.log</string>
+  <string>__HOME__/Library/Logs/obsidian-new-year.log</string>
   <key>EnvironmentVariables</key>
   <dict>
     <key>PATH</key>

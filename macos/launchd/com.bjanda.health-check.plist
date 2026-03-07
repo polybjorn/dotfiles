@@ -17,8 +17,8 @@
     <integer>0</integer>
   </dict>
   <key>StandardOutPath</key>
-  <string>/tmp/health-check.log</string>
+  <string>__HOME__/Library/Logs/health-check.log</string>
   <key>StandardErrorPath</key>
-  <string>/tmp/health-check.log</string>
+  <string>__HOME__/Library/Logs/health-check.log</string>
 </dict>
 </plist>

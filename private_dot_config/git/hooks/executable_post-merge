@@ -1,0 +1,11 @@
+#!/bin/sh
+# Global post-merge hook: auto-install when package-lock.json changes
+
+[ ! -f package-lock.json ] && exit 0
+command -v npm >/dev/null 2>&1 || exit 0
+
+changed=$(git diff-tree -r --name-only ORIG_HEAD HEAD -- package-lock.json)
+if [ -n "$changed" ]; then
+  echo "package-lock.json changed, running npm install..."
+  npm install
+fi

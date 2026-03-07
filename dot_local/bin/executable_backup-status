@@ -59,7 +59,7 @@ else
 fi
 
 # Mac backups (only show on Mac, or via Syncthing on Pi)
-MAC_BACKUP_DIR="$HOME/Vault/Backups/baa-macbook-m4"
+MAC_BACKUP_DIR="$HOME/Vault/Backups/$(hostname -s)"
 if [ -d "$MAC_BACKUP_DIR" ]; then
   echo
   echo "${bold}Mac backups${reset} ($MAC_BACKUP_DIR)"

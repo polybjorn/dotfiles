@@ -1,6 +1,8 @@
 [user]
   name = Bjørn A. Andersen
   email = polybjorn@users.noreply.github.com
+[core]
+  hooksPath = ~/.config/git/hooks
 [init]
   defaultBranch = main
 [pull]
