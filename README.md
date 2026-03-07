@@ -1,16 +1,23 @@
 # dotfiles
 
-Cross-platform dotfiles for macOS and Linux (Raspberry Pi), managed by
+Cross-platform dotfiles managed by
 [chezmoi](https://www.chezmoi.io/) for user configs and
 [Ansible](https://www.ansible.com/) for server infrastructure.
 
+Currently covers macOS and Raspberry Pi, with plans to add Proxmox, Arch Linux,
+and Windows as more machines join the fleet.
+
 ## Quick start
 
-### New Mac
+### New machine (chezmoi)
 
 ```sh
+# macOS
 brew install chezmoi
 chezmoi init polybjorn/dotfiles --apply
+
+# Linux
+sh -c "$(curl -fsLS get.chezmoi.io)" -- init --apply polybjorn/dotfiles
 ```
 
 ### Existing setup
@@ -20,7 +27,7 @@ ln -sfn ~/repositories/dotfiles ~/.local/share/chezmoi
 chezmoi apply
 ```
 
-### Pi server (from Mac)
+### Server infrastructure (Ansible, from Mac)
 
 ```sh
 cp linux/ansible/vars/private.yml.example linux/ansible/vars/private.yml
@@ -31,7 +38,7 @@ ansible-playbook linux/ansible/site.yml
 ## Architecture
 
 ```
-chezmoi (both platforms)          Ansible (Pi only, from Mac over SSH)
+chezmoi (all machines)            Ansible (servers, from Mac over SSH)
   ~/.zshenv                        /usr/local/bin/* (scripts)
   ~/.config/zsh/                   /etc/systemd/system/* (timers)
   ~/.config/git/                   /etc/nginx/sites-available/* (templates)
@@ -40,13 +47,14 @@ chezmoi (both platforms)          Ansible (Pi only, from Mac over SSH)
   ~/Library/LaunchAgents/ (macOS)  /etc/default/stats-api (secrets)
 ```
 
-chezmoi handles `$HOME` files with templates for platform differences.
-Ansible handles system-level files, deploying from Mac via SSH.
+chezmoi handles `$HOME` files on every machine, using templates and
+`.chezmoiignore` for platform differences (`{{ if eq .chezmoi.os "darwin" }}`).
+Ansible handles system-level server files, deploying from Mac via SSH.
 Secrets are separated: chezmoi uses age encryption, Ansible uses a gitignored vars file.
 
 ## What's included
 
-### Shared (both platforms)
+### Shared (all platforms)
 - Zsh with Powerlevel10k, ZDOTDIR at `~/.config/zsh/`
 - Cross-platform aliases with `$OSTYPE` branching
 - Cross-platform scripts: pkg-maintenance, ntfy, backup-status, syncthing-status
@@ -59,12 +67,17 @@ Secrets are separated: chezmoi uses age encryption, Ansible uses a gitignored va
 - macOS system defaults (opt-in)
 - Photo sorting, Obsidian automation
 
-### Linux (Raspberry Pi)
+### Raspberry Pi (Ansible-managed)
 - Server scripts (backup, health check, FreshRSS, nightmode, etc.)
 - Systemd services and timers
 - Nginx reverse proxy configs (Ansible Jinja2 templates)
 - Server configs (ntfy, cloudflared, unattended-upgrades, radicale, etc.)
 - Pi dashboard stats API
+
+### Planned
+- Proxmox — hypervisor management
+- Arch Linux — desktop/workstation configs
+- Windows — basic shell and git config
 
 ## Scheduled tasks
 
@@ -145,8 +158,9 @@ Copy `private.yml.example` and fill in your values.
 
 ## Conventions
 
-- chezmoi manages `$HOME` files; Ansible manages system files
+- chezmoi manages `$HOME` files; Ansible manages system files on servers
 - Templates handle platform differences (`{{ if eq .chezmoi.os "darwin" }}`)
+- New platforms: add OS-specific blocks to templates + entries in `.chezmoiignore`
 - LaunchAgent plists and systemd units are copied, not symlinked
 - Cross-platform scripts use `$OSTYPE` branching
 - `set -euo pipefail` and 2-space indentation for bash scripts
