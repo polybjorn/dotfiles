@@ -23,7 +23,7 @@ dotfiles/                              # chezmoi source directory
 │   │   └── hooks/
 │   │       └── executable_pre-commit  # → ~/.config/git/hooks/pre-commit (gitleaks + PII)
 │   └── dotfiles/
-│       └── create_env                 # → ~/.config/dotfiles/env (create if missing)
+│       └── encrypted_env.age          # → ~/.config/dotfiles/env (age-encrypted)
 ├── private_dot_hammerspoon/           # macOS only (.chezmoiignore)
 │   ├── init.lua
 │   └── Spoons/MiroWindowsManager.spoon/
@@ -111,6 +111,7 @@ Dry-run: `ansible-playbook linux/ansible/site.yml --check --diff`
 |---|---|---|
 | backup-claude | WatchPaths | /bin/cp (no script) |
 | backup | 03:00 daily | backup.sh |
+| backup-verify | 03:30 daily | backup-verify.sh |
 | health-check | 08:00 daily | health-check.sh |
 | stats-push | Every 5 min | stats-push.sh |
 | pkg-maintenance | Sun 09:00 | pkg-maintenance.sh |
@@ -138,7 +139,7 @@ Dry-run: `ansible-playbook linux/ansible/site.yml --check --diff`
 
 - Repo / chezmoi source: `~/repositories/dotfiles/` (symlinked from `~/.local/share/chezmoi`)
 - Dashboard: `~/repositories/pi-dashboard/`
-- Private config: `~/.config/dotfiles/env` (chezmoi `create_` — never overwrites)
+- Private config: `~/.config/dotfiles/env` (chezmoi, age-encrypted)
 - Platform git overrides: `~/.config/git/local.gitconfig` (chezmoi template)
 - User scripts: `~/.local/bin/` (chezmoi-managed copies)
 - Server scripts: `/usr/local/bin/` (Ansible symlinks, Pi only)
