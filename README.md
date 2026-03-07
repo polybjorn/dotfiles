@@ -58,13 +58,16 @@ Secrets are separated: chezmoi uses age encryption, Ansible uses a gitignored va
 - Cross-platform aliases with `$OSTYPE` branching
 - Cross-platform scripts: pkg-maintenance, ntfy, backup-status, syncthing-status
 - XDG Base Directory layout
+- Global git pre-commit hook: gitleaks secret scan + PII pattern scan
+  - PII patterns file templated per-machine via chezmoi
+  - Health-check validates hook is deployed
 
 ### macOS
 - Hammerspoon window management (MiroWindowsManager)
 - LaunchAgent scheduled tasks
 - Homebrew Brewfile (auto-installed via chezmoi `run_after_`)
 - macOS system defaults (opt-in)
-- Photo sorting, Obsidian automation
+- Photo sorting
 
 ### Server infrastructure (Ansible-managed)
 - Server scripts (backup, health check, FreshRSS, nightmode, etc.)
@@ -81,10 +84,15 @@ Secrets are separated: chezmoi uses age encryption, Ansible uses a gitignored va
 |---|---|---|
 | backup-claude | On file change | CLAUDE.md backup to Vault |
 | backup | 03:00 daily | Config tarball to Vault |
+| backup-verify | 03:30 daily | Verify backup freshness |
 | health-check | 08:00 daily | System diagnostics, ntfy alerts |
 | stats-push | Every 5 min | Push stats to Pi dashboard |
 | pkg-maintenance | Sun 09:00 | Package update/cleanup |
+| obsidian-new-year | Jan 1 09:00 | Create yearly/quarterly/monthly note structure |
 | obsidian-weekly-note | Mon 00:05 | Generate weekly planning note |
+| photo-sort | Every 30 min | Sort photos by EXIF date |
+| vault-maintenance-weekly | Mon 01:00 | Orphan fixer + broken link check |
+| vault-maintenance-monthly | 1st 02:00 | Frontmatter audit + tag scan |
 
 ### Linux (systemd timers)
 
@@ -96,6 +104,8 @@ Secrets are separated: chezmoi uses age encryption, Ansible uses a gitignored va
 | nightmode | 01:00-07:00 | Disable/enable nginx sites |
 | freshrss-refresh | */15 07-23h | FreshRSS feed refresh |
 | freshrss-digest | Mon 08:00 | Weekly release/feed report |
+| freshrss-yt-favicons | 1st 05:00 | YouTube favicon refresh |
+| rss-bridge-cache-cleanup | 04:00 daily | RSS-Bridge cache cleanup |
 | wifi-watchdog | Every 2 min | WiFi reconnection |
 
 ## Repo structure
@@ -108,7 +118,7 @@ dotfiles/                              # chezmoi source directory
 ├── private_dot_config/
 │   ├── zsh/                           # shell config (ZDOTDIR)
 │   ├── git/                           # git config + ignore
-│   └── dotfiles/create_env            # private env (created once, never overwritten)
+│   └── dotfiles/encrypted_env.age     # private env (age-encrypted)
 ├── private_dot_hammerspoon/           # macOS only
 ├── dot_local/bin/                     # user scripts (chezmoi-managed)
 │   ├── executable_pkg-maintenance.sh  # cross-platform (brew/apt)
@@ -140,7 +150,7 @@ dotfiles/                              # chezmoi source directory
 
 ## Private config
 
-**chezmoi** creates `~/.config/dotfiles/env` on first apply (never overwrites).
+**chezmoi** decrypts `encrypted_env.age` to `~/.config/dotfiles/env` on apply.
 Edit with private values (ntfy URL, Pi hostname).
 
 **Ansible** uses `linux/ansible/vars/private.yml` (gitignored) for server secrets

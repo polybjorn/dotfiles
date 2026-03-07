@@ -18,9 +18,12 @@ dotfiles/                              # chezmoi source directory
 │   │   └── aliases.zsh               # → ~/.config/zsh/aliases.zsh
 │   ├── git/
 │   │   ├── ignore                     # → ~/.config/git/ignore
-│   │   └── local.gitconfig.tmpl       # → ~/.config/git/local.gitconfig (bat/gh paths)
+│   │   ├── local.gitconfig.tmpl       # → ~/.config/git/local.gitconfig (bat/gh paths)
+│   │   ├── pii-patterns.tmpl          # → ~/.config/git/pii-patterns (PII scan patterns)
+│   │   └── hooks/
+│   │       └── executable_pre-commit  # → ~/.config/git/hooks/pre-commit (gitleaks + PII)
 │   └── dotfiles/
-│       └── create_env                 # → ~/.config/dotfiles/env (create if missing)
+│       └── encrypted_env.age          # → ~/.config/dotfiles/env (age-encrypted)
 ├── private_dot_hammerspoon/           # macOS only (.chezmoiignore)
 │   ├── init.lua
 │   └── Spoons/MiroWindowsManager.spoon/
@@ -32,8 +35,7 @@ dotfiles/                              # chezmoi source directory
 │   ├── executable_backup.sh           # macOS only (.chezmoiignore)
 │   ├── executable_health-check.sh     # macOS only
 │   ├── executable_stats-push.sh       # macOS only
-│   ├── executable_photo-sort.sh       # macOS only
-│   └── executable_obsidian-*.sh/py    # macOS only
+│   └── executable_photo-sort.sh       # macOS only
 ├── run_after_10-p10k.sh.tmpl         # deploy platform-specific p10k config
 ├── run_after_20-launchagents.sh.tmpl  # macOS: copy plists + load
 ├── run_after_30-brewfile.sh.tmpl      # macOS: brew bundle
@@ -94,7 +96,10 @@ Dry-run: `ansible-playbook linux/ansible/site.yml --check --diff`
 
 - chezmoi manages `$HOME` files with templates for platform branching
 - Ansible manages system-level files (`/etc/`, `/usr/local/bin/`)
-- LaunchAgent plists: COPIED (launchd removes symlinks on unload)
+- LaunchAgent plists use `__HOME__` placeholder, substituted with `$HOME` at deploy time
+- Global pre-commit hook: gitleaks (secrets) + PII scan (patterns from chezmoi template)
+- Health-check validates hook and PII patterns file are deployed
+- Never hardcode home paths in committed files — use `__HOME__`, `$HOME`, or chezmoi templates
 - Systemd units: COPIED (systemctl disable deletes symlinks)
 - Private values sourced from `~/.config/dotfiles/env`
 - age encryption available for secrets (key at `~/.config/chezmoi/key.txt`)
@@ -106,12 +111,15 @@ Dry-run: `ansible-playbook linux/ansible/site.yml --check --diff`
 |---|---|---|
 | backup-claude | WatchPaths | /bin/cp (no script) |
 | backup | 03:00 daily | backup.sh |
+| backup-verify | 03:30 daily | backup-verify.sh |
 | health-check | 08:00 daily | health-check.sh |
 | stats-push | Every 5 min | stats-push.sh |
 | pkg-maintenance | Sun 09:00 | pkg-maintenance.sh |
 | obsidian-weekly-note | Mon 00:05 | obsidian-weekly-note.py |
 | obsidian-new-year | Jan 1 09:00 | obsidian-new-year.sh |
 | photo-sort | Every 30 min | photo-sort.sh |
+| vault-maintenance-weekly | Mon 01:00 | vault-maintenance.py (paused) |
+| vault-maintenance-monthly | 1st 02:00 | vault-maintenance.py (paused) |
 
 ## Pi systemd timers
 
@@ -131,7 +139,7 @@ Dry-run: `ansible-playbook linux/ansible/site.yml --check --diff`
 
 - Repo / chezmoi source: `~/repositories/dotfiles/` (symlinked from `~/.local/share/chezmoi`)
 - Dashboard: `~/repositories/pi-dashboard/`
-- Private config: `~/.config/dotfiles/env` (chezmoi `create_` — never overwrites)
+- Private config: `~/.config/dotfiles/env` (chezmoi, age-encrypted)
 - Platform git overrides: `~/.config/git/local.gitconfig` (chezmoi template)
 - User scripts: `~/.local/bin/` (chezmoi-managed copies)
 - Server scripts: `/usr/local/bin/` (Ansible symlinks, Pi only)

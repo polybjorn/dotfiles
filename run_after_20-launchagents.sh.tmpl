@@ -11,7 +11,7 @@ mkdir -p "$DEST"
 for plist in "$LAUNCHD"/*.plist; do
   [ -f "$plist" ] || continue
   name=$(basename "$plist")
-  cp "$plist" "$DEST/$name"
+  sed "s|__HOME__|$HOME|g" "$plist" > "$DEST/$name"
   launchctl bootout "gui/$(id -u)" "$DEST/$name" 2>/dev/null || true
   launchctl bootstrap "gui/$(id -u)" "$DEST/$name"
 done

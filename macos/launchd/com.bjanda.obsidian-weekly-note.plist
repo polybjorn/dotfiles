@@ -7,7 +7,7 @@
   <key>ProgramArguments</key>
   <array>
     <string>/usr/bin/python3</string>
-    <string>__HOME__/.local/bin/obsidian-weekly-note.py</string>
+    <string>__HOME__/Vault/Obsidian/Extras/Scripts/obsidian-weekly-note.py</string>
   </array>
   <key>StartCalendarInterval</key>
   <dict>

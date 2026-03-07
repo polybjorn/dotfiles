@@ -3,31 +3,25 @@
 <plist version="1.0">
 <dict>
   <key>Label</key>
-  <string>com.bjanda.obsidian-new-year</string>
+  <string>com.bjanda.vault-maintenance-monthly</string>
   <key>ProgramArguments</key>
   <array>
     <string>/bin/zsh</string>
-    <string>__HOME__/Vault/Obsidian/Extras/Scripts/obsidian-new-year.sh</string>
+    <string>-c</string>
+    <string>/usr/bin/python3 __HOME__/Vault/Obsidian/Extras/Scripts/vault-maintenance.py frontmatter; /usr/bin/python3 __HOME__/Vault/Obsidian/Extras/Scripts/vault-maintenance.py tags</string>
   </array>
   <key>StartCalendarInterval</key>
   <dict>
-    <key>Month</key>
-    <integer>1</integer>
     <key>Day</key>
     <integer>1</integer>
     <key>Hour</key>
-    <integer>9</integer>
+    <integer>2</integer>
     <key>Minute</key>
     <integer>0</integer>
   </dict>
   <key>StandardOutPath</key>
-  <string>__HOME__/Library/Logs/obsidian-new-year.log</string>
+  <string>__HOME__/Library/Logs/vault-maintenance.log</string>
   <key>StandardErrorPath</key>
-  <string>__HOME__/Library/Logs/obsidian-new-year.log</string>
-  <key>EnvironmentVariables</key>
-  <dict>
-    <key>PATH</key>
-    <string>/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin</string>
-  </dict>
+  <string>__HOME__/Library/Logs/vault-maintenance.log</string>
 </dict>
 </plist>

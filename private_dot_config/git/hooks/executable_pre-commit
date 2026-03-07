@@ -1,8 +1,22 @@
 #!/bin/sh
-# Global pre-commit hook: scan staged changes for secrets with gitleaks
+# Global pre-commit hook: scan staged changes for secrets and PII
 
-if ! command -v gitleaks >/dev/null 2>&1; then
-  exit 0
+# Secrets scan
+if command -v gitleaks >/dev/null 2>&1; then
+  gitleaks protect --staged --no-banner || exit 1
 fi
 
-gitleaks protect --staged --no-banner
+# PII scan: block hardcoded personal identifiers in staged content
+PII_FILE="$HOME/.config/git/pii-patterns"
+if [ -f "$PII_FILE" ]; then
+  PII_PATTERNS=$(paste -sd'|' "$PII_FILE")
+  MATCHES=$(git diff --cached --diff-filter=d -U0 | grep -E "^\+" | grep -v "^+++" | grep -iE "$PII_PATTERNS" || true)
+if [ -n "$MATCHES" ]; then
+  echo "PII detected in staged changes:"
+  echo "$MATCHES"
+  echo ""
+  echo "Use __HOME__ placeholder or \$HOME instead of hardcoded paths."
+  echo "To bypass: git commit --no-verify"
+  exit 1
+fi
+fi

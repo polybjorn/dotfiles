@@ -70,7 +70,11 @@ for label in \
   com.bjanda.pkg-maintenance \
   com.bjanda.backup-verify \
   com.bjanda.obsidian-weekly-note \
-  com.bjanda.obsidian-new-year; do
+  com.bjanda.obsidian-new-year \
+  ; do
+  # Paused until vault cleanup is done:
+  # com.bjanda.vault-maintenance-weekly
+  # com.bjanda.vault-maintenance-monthly
   if ! launchctl list "$label" &>/dev/null; then
     DEAD_JOBS="${DEAD_JOBS}- $label\n"
   fi
@@ -79,6 +83,17 @@ done
 if [ -n "$DEAD_JOBS" ]; then
   alert "high" "LaunchAgent(s) Not Loaded" "gear,warning" \
     "$(echo -e "Unloaded jobs on $HOST:\n$DEAD_JOBS")"
+fi
+
+# --- Git pre-commit hook ---
+HOOK="$HOME/.config/git/hooks/pre-commit"
+PII="$HOME/.config/git/pii-patterns"
+if [ ! -x "$HOOK" ]; then
+  alert "high" "Pre-commit Hook Missing" "lock,warning" \
+    "Global pre-commit hook not found or not executable on $HOST"
+elif [ ! -f "$PII" ]; then
+  alert "default" "PII Patterns Missing" "lock,info" \
+    "PII patterns file not found on $HOST — run chezmoi apply"
 fi
 
 # --- Mac backup freshness ---
