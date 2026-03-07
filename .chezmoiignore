@@ -1,0 +1,22 @@
+# Non-chezmoi files in the repo
+Brewfile
+bootstrap.sh
+CLAUDE.md
+README.md
+LICENSE
+.gitignore
+dotfiles.env.example
+macos
+linux
+p10k
+
+# macOS-only files — skip on Linux
+{{ if ne .chezmoi.os "darwin" }}
+.hammerspoon
+.hammerspoon/**
+.local/bin/backup.sh
+.local/bin/health-check.sh
+.local/bin/stats-push.sh
+.local/bin/photo-sort.sh
+.local/bin/obsidian-*
+{{ end }}

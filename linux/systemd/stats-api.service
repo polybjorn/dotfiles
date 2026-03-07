@@ -8,7 +8,7 @@ ExecStart=/usr/bin/python3 /usr/local/bin/stats-api.py
 Restart=always
 User=www-data
 SupplementaryGroups=ntfy
-Environment=SYNCTHING_API_KEY=REDACTED_SYNCTHING_API_KEY
+EnvironmentFile=-/etc/default/stats-api
 
 [Install]
 WantedBy=multi-user.target

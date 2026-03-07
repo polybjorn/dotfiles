@@ -1,0 +1,26 @@
+server {
+    listen 8081 ssl;
+    server_name {{ tailscale_hostname }};
+    ssl_certificate /var/lib/tailscale/certs/{{ tailscale_hostname }}.crt;
+    ssl_certificate_key /var/lib/tailscale/certs/{{ tailscale_hostname }}.key;
+    root /var/www/FreshRSS/p;
+    index index.php;
+
+    location / {
+        try_files $uri $uri/ /index.php$is_args$args;
+    }
+
+    location ~ ^(.+\.php)(/.+)$ {
+        fastcgi_split_path_info ^(.+\.php)(/.+)$;
+        fastcgi_pass unix:/run/php/php8.2-fpm.sock;
+        include fastcgi_params;
+        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+        fastcgi_param PATH_INFO $fastcgi_path_info;
+    }
+
+    location ~ \.php$ {
+        fastcgi_pass unix:/run/php/php8.2-fpm.sock;
+        include snippets/fastcgi-php.conf;
+        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+    }
+}

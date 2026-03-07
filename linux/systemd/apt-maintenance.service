@@ -1,8 +1,0 @@
-[Unit]
-Description=Weekly apt update, upgrade, and cleanup
-After=network-online.target
-Wants=network-online.target
-
-[Service]
-Type=oneshot
-ExecStart=/usr/local/bin/apt-maintenance.sh

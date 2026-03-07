@@ -1,0 +1,38 @@
+# Public proxy — blocks admin settings
+server {
+    listen 8443;
+    server_name social.polybjorn.com;
+
+    location /settings {
+        return 404;
+    }
+
+    location / {
+        proxy_pass http://127.0.0.1:8180;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto https;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+    }
+}
+
+# Tailscale-only proxy — full access including settings
+server {
+    listen 8444 ssl;
+    server_name {{ tailscale_hostname }};
+
+    ssl_certificate /var/lib/tailscale/certs/{{ tailscale_hostname }}.crt;
+    ssl_certificate_key /var/lib/tailscale/certs/{{ tailscale_hostname }}.key;
+
+    location / {
+        proxy_pass http://127.0.0.1:8180;
+        proxy_set_header Host social.polybjorn.com;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto https;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+    }
+}

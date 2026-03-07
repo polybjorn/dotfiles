@@ -1,0 +1,43 @@
+---
+- name: Pi server infrastructure
+  hosts: pi
+  become: true
+
+  vars_files:
+    - vars/private.yml
+
+  vars:
+    dotfiles_dir: /home/admin/repositories/dotfiles
+    user_name: admin
+    user_home: /home/admin
+
+    timers:
+      - backup.timer
+      - health-check.timer
+      - freshrss-refresh.timer
+      - freshrss-digest.timer
+      - nightmode-on.timer
+      - nightmode-off.timer
+      - pkg-maintenance.timer
+      - wifi-watchdog.timer
+      - rss-bridge-cache-cleanup.timer
+      - freshrss-yt-favicons.timer
+
+  pre_tasks:
+    - name: Create backup directories
+      file:
+        path: "{{ item }}"
+        state: directory
+        owner: "{{ user_name }}"
+        group: "{{ user_name }}"
+      loop:
+        - "{{ user_home }}/backups"
+        - "{{ user_home }}/Vault/Backups"
+
+  roles:
+    - scripts
+    - systemd
+    - nginx
+    - configs
+    - dashboard
+    - sudoers

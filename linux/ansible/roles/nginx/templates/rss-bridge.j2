@@ -1,0 +1,38 @@
+server {
+    listen 8084 ssl;
+    server_name {{ tailscale_hostname }};
+    ssl_certificate /var/lib/tailscale/certs/{{ tailscale_hostname }}.crt;
+    ssl_certificate_key /var/lib/tailscale/certs/{{ tailscale_hostname }}.key;
+    root /var/www/rss-bridge;
+    index index.php;
+
+    auth_basic "RSS-Bridge";
+    auth_basic_user_file /etc/nginx/.htpasswd-rss-bridge;
+
+    location / {
+        try_files $uri $uri/ /index.php$is_args$args;
+    }
+
+    location ~ \.php$ {
+        fastcgi_pass unix:/run/php/php8.2-fpm.sock;
+        include snippets/fastcgi-php.conf;
+        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+    }
+}
+
+# Internal access for FreshRSS (no auth, no SSL)
+server {
+    listen 127.0.0.1:8085;
+    root /var/www/rss-bridge;
+    index index.php;
+
+    location / {
+        try_files $uri $uri/ /index.php$is_args$args;
+    }
+
+    location ~ \.php$ {
+        fastcgi_pass unix:/run/php/php8.2-fpm.sock;
+        include snippets/fastcgi-php.conf;
+        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+    }
+}

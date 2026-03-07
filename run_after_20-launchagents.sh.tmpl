@@ -1,0 +1,18 @@
+{{ if eq .chezmoi.os "darwin" -}}
+#!/bin/bash
+# Copy LaunchAgent plists and load them
+# Plists are copied (not symlinked) because launchd removes symlinks on unload
+
+LAUNCHD="{{ .chezmoi.sourceDir }}/macos/launchd"
+DEST="$HOME/Library/LaunchAgents"
+
+mkdir -p "$DEST"
+
+for plist in "$LAUNCHD"/*.plist; do
+  [ -f "$plist" ] || continue
+  name=$(basename "$plist")
+  cp "$plist" "$DEST/$name"
+  launchctl bootout "gui/$(id -u)" "$DEST/$name" 2>/dev/null || true
+  launchctl bootstrap "gui/$(id -u)" "$DEST/$name"
+done
+{{ end -}}

@@ -1,0 +1,8 @@
+---
+- name: Deploy nginx site configs from templates
+  template:
+    src: "{{ item }}"
+    dest: "/etc/nginx/sites-available/{{ item | basename | regex_replace('\\.j2$', '') }}"
+  with_fileglob:
+    - "templates/*.j2"
+  notify: reload-nginx

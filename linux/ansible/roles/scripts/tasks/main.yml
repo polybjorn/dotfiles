@@ -1,0 +1,20 @@
+---
+- name: Find all scripts
+  find:
+    paths: "{{ dotfiles_dir }}/linux/scripts"
+    file_type: file
+  register: script_files
+
+- name: Symlink scripts to /usr/local/bin/
+  file:
+    src: "{{ item.path }}"
+    dest: "/usr/local/bin/{{ item.path | basename }}"
+    state: link
+    force: true
+  loop: "{{ script_files.files }}"
+
+- name: Ensure scripts are executable
+  file:
+    path: "{{ item.path }}"
+    mode: "0755"
+  loop: "{{ script_files.files }}"

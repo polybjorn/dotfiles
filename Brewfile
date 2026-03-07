@@ -1,4 +1,7 @@
+brew "age"
+brew "ansible"
 brew "bat"
+brew "chezmoi"
 brew "eza"
 brew "fd"
 brew "fzf"

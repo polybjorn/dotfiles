@@ -1,0 +1,43 @@
+# ntfy server config file
+#
+# Please refer to the documentation at https://ntfy.sh/docs/config/ for details.
+# All options also support underscores (_) instead of dashes (-) to comply with the YAML spec.
+
+# Public facing base URL of the service (e.g. https://ntfy.sh or https://ntfy.example.com)
+#
+# This setting is required for any of the following features:
+# - attachments (to return a download URL)
+# - e-mail sending (for the topic URL in the email footer)
+# - iOS push notifications for self-hosted servers (to calculate the Firebase poll_request topic)
+# - Matrix Push Gateway (to validate that the pushkey is correct)
+#
+base-url: "https://{{ tailscale_hostname }}:2587"
+
+# Listen address for the HTTP & HTTPS web server. If "listen-https" is set, you must also
+# set "key-file" and "cert-file". Format: [<ip>]:<port>, e.g. "1.2.3.4:8080".
+#
+# To listen on all interfaces, you may omit the IP address, e.g. ":443".
+# To disable HTTP, set "listen-http" to "-".
+#
+listen-http: ":2586"
+listen-https: ":2587"
+
+# Path to the private key & cert file for the HTTPS web server. Not used if "listen-https" is not set.
+#
+key-file: "/etc/ntfy/certs/{{ tailscale_hostname }}.key"
+cert-file: "/etc/ntfy/certs/{{ tailscale_hostname }}.crt"
+
+# If set, also publish messages to a Firebase Cloud Messaging (FCM) topic for your app.
+# This is optional and only required to save battery when using the Android app.
+#
+# firebase-key-file: <filename>
+
+# If "cache-file" is set, messages are cached in a local SQLite database instead of only in-memory.
+# This allows for service restarts without losing messages in support of the since= parameter.
+#
+cache-file: "/var/cache/ntfy/cache.db"
+
+# If set, the X-Forwarded-For header is used to determine the visitor IP address
+# instead of the remote address of the connection.
+#
+behind-proxy: true

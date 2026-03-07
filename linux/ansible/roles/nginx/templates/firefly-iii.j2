@@ -1,0 +1,23 @@
+server {
+    listen 8083 ssl;
+    server_name {{ tailscale_hostname }};
+
+    ssl_certificate /var/lib/tailscale/certs/{{ tailscale_hostname }}.crt;
+    ssl_certificate_key /var/lib/tailscale/certs/{{ tailscale_hostname }}.key;
+
+    root /var/www/firefly-iii/public;
+    index index.php;
+
+    location / {
+        try_files $uri $uri/ /index.php?$query_string;
+    }
+
+    location ~ \.php$ {
+        include snippets/fastcgi-php.conf;
+        fastcgi_pass unix:/run/php/php8.3-fpm.sock;
+    }
+
+    location ~ /\. {
+        deny all;
+    }
+}
