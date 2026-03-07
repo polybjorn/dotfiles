@@ -1,0 +1,64 @@
+---
+- name: Create cron-registry directory
+  file:
+    path: /usr/local/lib/pi-cron
+    state: directory
+
+- name: Symlink cron-registry.json
+  file:
+    src: "{{ dotfiles_dir }}/linux/config/cron-registry.json"
+    dest: /usr/local/lib/pi-cron/cron-registry.json
+    state: link
+    force: true
+
+- name: Symlink ntfy server config
+  file:
+    src: "{{ dotfiles_dir }}/linux/config/ntfy-server.yml"
+    dest: /etc/ntfy/server.yml
+    state: link
+    force: true
+
+- name: Symlink cloudflared config
+  file:
+    src: "{{ dotfiles_dir }}/linux/config/cloudflared.yml"
+    dest: /etc/cloudflared/config.yml
+    state: link
+    force: true
+
+- name: Symlink apt unattended-upgrades configs
+  file:
+    src: "{{ dotfiles_dir }}/linux/config/{{ item.src }}"
+    dest: "/etc/apt/apt.conf.d/{{ item.src }}"
+    state: link
+    force: true
+  loop:
+    - { src: 50unattended-upgrades }
+    - { src: 20auto-upgrades }
+
+- name: Create needrestart config directory
+  file:
+    path: /etc/needrestart/conf.d
+    state: directory
+
+- name: Symlink needrestart config
+  file:
+    src: "{{ dotfiles_dir }}/linux/config/needrestart.conf"
+    dest: /etc/needrestart/conf.d/pi-server.conf
+    state: link
+    force: true
+
+- name: Copy logrotate config
+  copy:
+    src: "{{ dotfiles_dir }}/linux/config/logrotate-pi-server"
+    dest: /etc/logrotate.d/pi-server
+    remote_src: true
+
+- name: Copy rss-bridge config (if installed)
+  copy:
+    src: "{{ dotfiles_dir }}/linux/config/rss-bridge.ini.php"
+    dest: /var/www/rss-bridge/config.ini.php
+    owner: www-data
+    group: www-data
+    remote_src: true
+  when: "'/var/www/rss-bridge' is directory"
+  ignore_errors: true

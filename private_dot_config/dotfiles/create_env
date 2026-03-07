@@ -1,0 +1,5 @@
+# Private dotfiles config — not tracked in git
+# Fill in your values after setup
+
+NTFY_URL="https://your-ntfy-server:2587"
+PI_HOST="admin@your-pi-host"

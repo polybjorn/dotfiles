@@ -1,0 +1,12 @@
+#!/bin/bash
+# Deploy platform-specific Powerlevel10k config
+
+{{ if eq .chezmoi.os "darwin" -}}
+SRC="{{ .chezmoi.sourceDir }}/p10k/darwin.zsh"
+{{ else -}}
+SRC="{{ .chezmoi.sourceDir }}/p10k/linux.zsh"
+{{ end -}}
+
+if [ -f "$SRC" ]; then
+  cp "$SRC" "$HOME/.config/zsh/.p10k.zsh"
+fi

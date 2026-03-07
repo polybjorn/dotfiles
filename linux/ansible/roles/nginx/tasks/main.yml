@@ -1,0 +1,15 @@
+---
+- name: Find nginx site configs
+  find:
+    paths: "{{ dotfiles_dir }}/linux/nginx"
+    file_type: file
+  register: nginx_files
+
+- name: Symlink nginx sites to sites-available
+  file:
+    src: "{{ item.path }}"
+    dest: "/etc/nginx/sites-available/{{ item.path | basename }}"
+    state: link
+    force: true
+  loop: "{{ nginx_files.files }}"
+  notify: reload-nginx

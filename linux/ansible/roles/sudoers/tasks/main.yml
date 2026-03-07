@@ -1,0 +1,7 @@
+---
+- name: Deploy sudoers for timer control
+  template:
+    src: 020_pi-cron.j2
+    dest: /etc/sudoers.d/020_pi-cron
+    mode: "0440"
+    validate: visudo -cf %s

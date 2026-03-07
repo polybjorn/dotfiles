@@ -1,0 +1,4 @@
+{% for timer in timers %}
+www-data ALL=(root) NOPASSWD: /usr/bin/systemctl enable {{ timer }}
+www-data ALL=(root) NOPASSWD: /usr/bin/systemctl disable {{ timer }}
+{% endfor %}

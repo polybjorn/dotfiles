@@ -1,0 +1,9 @@
+---
+- name: reload-nginx
+  command: nginx -t
+  notify: do-reload-nginx
+
+- name: do-reload-nginx
+  systemd:
+    name: nginx
+    state: reloaded

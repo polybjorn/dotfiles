@@ -1,0 +1,13 @@
+---
+- name: Check if pi-dashboard repo exists
+  stat:
+    path: "{{ user_home }}/repositories/pi-dashboard"
+  register: dashboard_repo
+
+- name: Symlink dashboard to /var/www/
+  file:
+    src: "{{ user_home }}/repositories/pi-dashboard"
+    dest: /var/www/pi-dashboard
+    state: link
+    force: true
+  when: dashboard_repo.stat.exists

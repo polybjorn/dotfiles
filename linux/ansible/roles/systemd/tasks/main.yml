@@ -1,0 +1,46 @@
+---
+- name: Find systemd unit files
+  find:
+    paths: "{{ dotfiles_dir }}/linux/systemd"
+    file_type: file
+    recurse: false
+  register: unit_files
+
+- name: Copy systemd units
+  copy:
+    src: "{{ item.path }}"
+    dest: "/etc/systemd/system/{{ item.path | basename }}"
+    remote_src: true
+  loop: "{{ unit_files.files }}"
+  notify: daemon-reload
+
+- name: Find systemd override files
+  find:
+    paths: "{{ dotfiles_dir }}/linux/systemd/overrides"
+    file_type: file
+  register: override_files
+
+- name: Create override directories
+  file:
+    path: "/etc/systemd/system/{{ item.path | basename | regex_replace('.conf$', '') }}.service.d"
+    state: directory
+  loop: "{{ override_files.files }}"
+
+- name: Copy systemd overrides
+  copy:
+    src: "{{ item.path }}"
+    dest: "/etc/systemd/system/{{ item.path | basename | regex_replace('.conf$', '') }}.service.d/override.conf"
+    remote_src: true
+  loop: "{{ override_files.files }}"
+  notify: daemon-reload
+
+- name: Flush handlers (daemon-reload before enabling)
+  meta: flush_handlers
+
+- name: Enable and start timers
+  systemd:
+    name: "{{ item }}"
+    enabled: true
+    state: started
+    daemon_reload: false
+  loop: "{{ timers }}"
