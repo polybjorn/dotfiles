@@ -1,0 +1,41 @@
+name: Validate
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  chezmoi:
+    name: chezmoi dry-run
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install chezmoi
+        run: sh -c "$(curl -fsLS get.chezmoi.io)" -- -b /usr/local/bin
+      - name: Validate chezmoi config
+        run: chezmoi init --source=$PWD --dry-run --no-tty
+
+  ansible:
+    name: Ansible syntax check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Ansible
+        run: pip install ansible
+      - name: Create dummy private vars
+        run: cp linux/ansible/vars/private.yml.example linux/ansible/vars/private.yml
+      - name: Syntax check
+        run: ansible-playbook linux/ansible/site.yml --syntax-check
+
+  shellcheck:
+    name: ShellCheck
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check user scripts
+        run: |
+          find dot_local/bin -name 'executable_*.sh' -print0 | xargs -0 shellcheck -S warning || true
+      - name: Check server scripts
+        run: |
+          find linux/scripts -name '*.sh' -print0 | xargs -0 shellcheck -S warning || true
