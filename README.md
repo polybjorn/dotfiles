@@ -3,7 +3,7 @@
 Cross-platform dotfiles managed by
 [chezmoi](https://www.chezmoi.io/) for user configs and
 [Ansible](https://www.ansible.com/) for server infrastructure.
-Designed to scale across machines — new platforms are added via
+Designed to scale across machines. New platforms are added via
 chezmoi templates and Ansible inventory.
 
 ## Quick start
@@ -68,7 +68,7 @@ Secrets are separated: chezmoi uses age encryption, Ansible uses a gitignored va
 - Hammerspoon window management (MiroWindowsManager)
 - LaunchAgent scheduled tasks
 - Homebrew Brewfile (auto-installed via chezmoi `run_after_`)
-- macOS system defaults (opt-in) — includes firewall + stealth mode
+- macOS system defaults (opt-in) - includes firewall + stealth mode
 - Photo sorting
 
 ### Server infrastructure (Ansible-managed)
@@ -175,4 +175,4 @@ Copy `private.yml.example` and fill in your values.
 - LaunchAgent plists and systemd units are copied, not symlinked
 - Cross-platform scripts use `$OSTYPE` branching
 - `set -euo pipefail` and 2-space indentation for bash scripts
-- Private values never committed — sourced from env files or Ansible vars
+- Private values never committed, sourced from env files or Ansible vars
