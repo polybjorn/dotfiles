@@ -17,6 +17,7 @@ p10k
 .hammerspoon
 .hammerspoon/**
 .local/bin/backup.sh
+.local/bin/backup-verify.sh
 .local/bin/health-check.sh
 .local/bin/stats-push.sh
 .local/bin/photo-sort.sh

@@ -68,6 +68,7 @@ for label in \
   com.bjanda.health-check \
   com.bjanda.stats-push \
   com.bjanda.pkg-maintenance \
+  com.bjanda.backup-verify \
   com.bjanda.obsidian-weekly-note \
   com.bjanda.obsidian-new-year; do
   if ! launchctl list "$label" &>/dev/null; then
@@ -78,6 +79,44 @@ done
 if [ -n "$DEAD_JOBS" ]; then
   alert "high" "LaunchAgent(s) Not Loaded" "gear,warning" \
     "$(echo -e "Unloaded jobs on $HOST:\n$DEAD_JOBS")"
+fi
+
+# --- Syncthing folder health ---
+ST_API="http://localhost:8384"
+ST_CONFIG="$HOME/Library/Application Support/Syncthing/config.xml"
+ST_KEY=$(sed -n 's/.*<apikey>\([^<]*\)<.*/\1/p' "$ST_CONFIG" 2>/dev/null)
+
+if [ -n "$ST_KEY" ] && curl -s --max-time 3 "$ST_API/rest/system/status" -H "X-API-Key: $ST_KEY" >/dev/null 2>&1; then
+  ST_PROBLEMS=""
+  ST_WATCH=""
+  while IFS='|' read -r folder_id folder_label; do
+    STATUS=$(curl -s --max-time 5 -H "X-API-Key: $ST_KEY" \
+      "$ST_API/rest/db/status?folder=$folder_id" 2>/dev/null)
+    [ -z "$STATUS" ] && continue
+    echo "$STATUS" | jq empty 2>/dev/null || continue
+    _st=$(echo "$STATUS" | jq -r '.state // ""')
+    _er=$(echo "$STATUS" | jq -r '.errors // 0')
+    _pe=$(echo "$STATUS" | jq -r '.pullErrors // 0')
+    _we=$(echo "$STATUS" | jq -r '.watchError // ""')
+    _em=$(echo "$STATUS" | jq -r '.error // ""')
+    if [ "$_st" = "error" ]; then
+      ST_PROBLEMS="${ST_PROBLEMS}- $folder_label: ${_em:-error state}\n"
+    fi
+    [ "$_er" -gt 0 ] 2>/dev/null && \
+      ST_PROBLEMS="${ST_PROBLEMS}- $folder_label: $_er sync error(s)\n"
+    [ "$_pe" -gt 0 ] 2>/dev/null && \
+      ST_PROBLEMS="${ST_PROBLEMS}- $folder_label: $_pe pull error(s)\n"
+    [ -n "$_we" ] && \
+      ST_WATCH="${ST_WATCH}- $folder_label: $_we\n"
+  done < <(sed -n 's/.*folder id="\([^"]*\)".*label="\([^"]*\)".*/\1|\2/p' "$ST_CONFIG")
+  if [ -n "$ST_PROBLEMS" ]; then
+    alert "high" "Syncthing Folder Error" "arrows_counterclockwise,warning" \
+      "$(echo -e "Syncthing issues on $HOST:\n$ST_PROBLEMS")"
+  fi
+  if [ -n "$ST_WATCH" ]; then
+    alert "default" "Syncthing Watch Error" "arrows_counterclockwise,warning" \
+      "$(echo -e "FS watch issues on $HOST:\n$ST_WATCH")"
+  fi
 fi
 
 # --- Pi services (via SSH, skip if unreachable) ---
