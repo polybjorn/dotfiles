@@ -45,7 +45,7 @@ ansible-playbook linux/ansible/site.yml
 ### Linux (Raspberry Pi)
 - Server scripts (backup, health check, package maintenance, FreshRSS, etc.)
 - Systemd services and timers
-- Nginx reverse proxy configs
+- Nginx reverse proxy configs (Ansible templates)
 - Server configs (ntfy, cloudflared, unattended-upgrades, radicale, etc.)
 
 ## Scheduled tasks
@@ -78,5 +78,9 @@ ansible-playbook linux/ansible/site.yml
 chezmoi creates `~/.config/dotfiles/env` on first apply (never overwrites).
 Edit with your private values (ntfy URL, Pi hostname).
 
-age encryption is available for secrets committed to the repo
+Ansible uses `linux/ansible/vars/private.yml` (gitignored) for server secrets
+(Tailscale hostname, Syncthing API key, Cloudflare tunnel ID).
+Copy `private.yml.example` and fill in your values.
+
+age encryption is available for chezmoi-managed secrets
 (key at `~/.config/chezmoi/key.txt`).

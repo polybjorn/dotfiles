@@ -21,10 +21,10 @@ server {
 # Tailscale-only proxy — full access including settings
 server {
     listen 8444 ssl;
-    server_name pi-server.TAILNET.ts.net;
+    server_name {{ tailscale_hostname }};
 
-    ssl_certificate /var/lib/tailscale/certs/pi-server.TAILNET.ts.net.crt;
-    ssl_certificate_key /var/lib/tailscale/certs/pi-server.TAILNET.ts.net.key;
+    ssl_certificate /var/lib/tailscale/certs/{{ tailscale_hostname }}.crt;
+    ssl_certificate_key /var/lib/tailscale/certs/{{ tailscale_hostname }}.key;
 
     location / {
         proxy_pass http://127.0.0.1:8180;

@@ -1,0 +1,5 @@
+tunnel: {{ cloudflare_tunnel_id }}
+credentials-file: /etc/cloudflared/{{ cloudflare_tunnel_id }}.json
+
+ingress:
+  - service: http_status:404

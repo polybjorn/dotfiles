@@ -1,9 +1,9 @@
 server {
     listen 8082 ssl;
-    server_name pi-server.TAILNET.ts.net;
+    server_name {{ tailscale_hostname }};
 
-    ssl_certificate /var/lib/tailscale/certs/pi-server.TAILNET.ts.net.crt;
-    ssl_certificate_key /var/lib/tailscale/certs/pi-server.TAILNET.ts.net.key;
+    ssl_certificate /var/lib/tailscale/certs/{{ tailscale_hostname }}.crt;
+    ssl_certificate_key /var/lib/tailscale/certs/{{ tailscale_hostname }}.key;
 
     root /var/www/invoiceplane;
     index index.php;

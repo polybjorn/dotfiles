@@ -46,9 +46,11 @@ dotfiles/                              # chezmoi source directory
 ├── linux/
 │   ├── scripts/                       # Pi server scripts → /usr/local/bin/
 │   ├── systemd/                       # systemd units (copies) + overrides/
-│   ├── nginx/                         # reverse proxy configs
-│   ├── config/                        # server configs (ntfy, cloudflared, apt, etc.)
+│   ├── config/                        # server configs (apt, logrotate, etc.)
 │   ├── ansible/                       # Ansible playbook + roles
+│   │   ├── roles/nginx/templates/     # nginx site configs (Jinja2)
+│   │   ├── roles/configs/templates/   # ntfy + cloudflared configs (Jinja2)
+│   │   └── vars/private.yml           # secrets (gitignored)
 │   └── install.sh                     # legacy fallback (no-dependency)
 ├── Brewfile                           # Homebrew packages
 ├── bootstrap.sh                       # legacy fallback (pre-chezmoi)

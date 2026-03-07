@@ -1,15 +1,8 @@
 ---
-- name: Find nginx site configs
-  find:
-    paths: "{{ dotfiles_dir }}/linux/nginx"
-    file_type: file
-  register: nginx_files
-
-- name: Symlink nginx sites to sites-available
-  file:
-    src: "{{ item.path }}"
-    dest: "/etc/nginx/sites-available/{{ item.path | basename }}"
-    state: link
-    force: true
-  loop: "{{ nginx_files.files }}"
+- name: Deploy nginx site configs from templates
+  template:
+    src: "{{ item }}"
+    dest: "/etc/nginx/sites-available/{{ item | basename | regex_replace('\\.j2$', '') }}"
+  with_fileglob:
+    - "templates/*.j2"
   notify: reload-nginx

@@ -11,19 +11,23 @@
     state: link
     force: true
 
-- name: Symlink ntfy server config
-  file:
-    src: "{{ dotfiles_dir }}/linux/config/ntfy-server.yml"
+- name: Deploy ntfy server config from template
+  template:
+    src: ntfy-server.yml.j2
     dest: /etc/ntfy/server.yml
-    state: link
-    force: true
 
-- name: Symlink cloudflared config
-  file:
-    src: "{{ dotfiles_dir }}/linux/config/cloudflared.yml"
+- name: Deploy cloudflared config from template
+  template:
+    src: cloudflared.yml.j2
     dest: /etc/cloudflared/config.yml
-    state: link
-    force: true
+
+- name: Create stats-api environment file
+  copy:
+    content: "SYNCTHING_API_KEY={{ syncthing_api_key }}\n"
+    dest: /etc/default/stats-api
+    owner: root
+    group: root
+    mode: "0640"
 
 - name: Symlink apt unattended-upgrades configs
   file:

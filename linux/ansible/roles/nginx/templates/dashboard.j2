@@ -1,15 +1,15 @@
 server {
     listen 80;
-    server_name pi-server.TAILNET.ts.net;
+    server_name {{ tailscale_hostname }};
     return 301 https://$host$request_uri;
 }
 
 server {
     listen 443 ssl;
-    server_name pi-server.TAILNET.ts.net;
+    server_name {{ tailscale_hostname }};
 
-    ssl_certificate /var/lib/tailscale/certs/pi-server.TAILNET.ts.net.crt;
-    ssl_certificate_key /var/lib/tailscale/certs/pi-server.TAILNET.ts.net.key;
+    ssl_certificate /var/lib/tailscale/certs/{{ tailscale_hostname }}.crt;
+    ssl_certificate_key /var/lib/tailscale/certs/{{ tailscale_hostname }}.key;
 
     root /var/www/pi-dashboard;
     index index.html;

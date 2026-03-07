@@ -52,14 +52,10 @@ for override in "$SCRIPT_DIR"/systemd/overrides/*.conf; do
   echo "  [ok] ${svc} override → ${svc}.service.d/override.conf"
 done
 
-# ── Nginx sites → /etc/nginx/sites-available/ ────────────
-echo "Installing nginx configs..."
-for site in "$SCRIPT_DIR"/nginx/*; do
-  [ -f "$site" ] || continue
-  name=$(basename "$site")
-  ln -sfn "$site" "/etc/nginx/sites-available/$name"
-  echo "  [ok] $name → /etc/nginx/sites-available/$name"
-done
+# ── Nginx sites ───────────────────────────────────────────
+# Nginx configs are now Ansible templates (roles/nginx/templates/).
+# Use: ansible-playbook linux/ansible/site.yml
+echo "  [skip] nginx configs — use Ansible"
 
 # ── Server configs ────────────────────────────────────────
 echo "Installing server configs..."
@@ -69,11 +65,9 @@ mkdir -p /usr/local/lib/pi-cron
 ln -sfn "$CFG/cron-registry.json" "/usr/local/lib/pi-cron/cron-registry.json"
 echo "  [ok] cron-registry.json"
 
-ln -sfn "$CFG/ntfy-server.yml" "/etc/ntfy/server.yml"
-echo "  [ok] ntfy-server.yml → /etc/ntfy/server.yml"
-
-ln -sfn "$CFG/cloudflared.yml" "/etc/cloudflared/config.yml"
-echo "  [ok] cloudflared.yml → /etc/cloudflared/config.yml"
+# ntfy and cloudflared configs are now Ansible templates.
+echo "  [skip] ntfy-server.yml — use Ansible"
+echo "  [skip] cloudflared.yml — use Ansible"
 
 ln -sfn "$CFG/50unattended-upgrades" "/etc/apt/apt.conf.d/50unattended-upgrades"
 ln -sfn "$CFG/20auto-upgrades" "/etc/apt/apt.conf.d/20auto-upgrades"
