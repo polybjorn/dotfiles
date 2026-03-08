@@ -66,3 +66,13 @@
     remote_src: true
   when: "'/var/www/rss-bridge' is directory"
   ignore_errors: true
+
+- name: Copy custom rss-bridge bridges (if installed)
+  copy:
+    src: "{{ dotfiles_dir }}/linux/config/rss-bridge/"
+    dest: /var/www/rss-bridge/bridges/
+    owner: www-data
+    group: www-data
+    remote_src: true
+  when: "'/var/www/rss-bridge' is directory"
+  ignore_errors: true

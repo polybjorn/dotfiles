@@ -84,6 +84,12 @@ if [ -d /var/www/rss-bridge ]; then
   cp "$CFG/rss-bridge.ini.php" "/var/www/rss-bridge/config.ini.php"
   chown www-data:www-data "/var/www/rss-bridge/config.ini.php"
   echo "  [ok] rss-bridge.ini.php (copy)"
+  for bridge in "$CFG"/rss-bridge/*.php; do
+    [ -f "$bridge" ] || continue
+    cp "$bridge" "/var/www/rss-bridge/bridges/"
+    chown www-data:www-data "/var/www/rss-bridge/bridges/$(basename "$bridge")"
+    echo "  [ok] $(basename "$bridge") → bridges/ (copy)"
+  done
 fi
 
 # ── Dashboard symlink ─────────────────────────────────────
