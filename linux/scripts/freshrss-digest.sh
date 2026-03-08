@@ -53,8 +53,8 @@ if [ -n "$releases" ]; then
 
     curl -s -o /dev/null \
         -H "Title: Software release digest" \
-        -H "Tags: package" \
-        -d "$body" \
+        -H "Tags: package,calendar" \
+        -d "$(echo -e "Scheduled: weekly (Mon 08:00)\n\n$body")" \
         "$NTFY_URL"
 fi
 
@@ -120,8 +120,8 @@ if [ -n "$outdated" ]; then
     [ "$up_to_date" -gt 0 ] && ver_body+=$'\n'"$up_to_date service(s) up to date"
     curl -s -o /dev/null \
         -H "Title: Services behind latest release" \
-        -H "Tags: arrow_up" \
-        -d "$ver_body" \
+        -H "Tags: arrow_up,calendar" \
+        -d "$(echo -e "Scheduled: weekly (Mon 08:00)\n\n$ver_body")" \
         "$NTFY_URL"
 fi
 
@@ -148,8 +148,8 @@ if [ -n "$problems" ]; then
 
     curl -s -o /dev/null \
         -H "Title: FreshRSS feed problems" \
-        -H "Tags: warning" \
-        -d "$msg" \
+        -H "Tags: warning,calendar" \
+        -d "$(echo -e "Scheduled: weekly (Mon 08:00)\n\n$msg")" \
         "$NTFY_URL"
 fi
 
@@ -170,8 +170,8 @@ if [ -f "$REPO_OPML" ]; then
         drift+=$'\n\nUpdate repo: cd ~/repositories/dotfiles && sudo -u www-data php /var/www/FreshRSS/cli/export-opml-for-user.php --user freshrss > linux/config/freshrss-feeds.opml'
         curl -s -o /dev/null \
             -H "Title: FreshRSS feed drift detected" \
-            -H "Tags: warning" \
-            -d "$drift" \
+            -H "Tags: warning,calendar" \
+            -d "$(echo -e "Scheduled: weekly (Mon 08:00)\n\n$drift")" \
             "$NTFY_URL"
     fi
 fi

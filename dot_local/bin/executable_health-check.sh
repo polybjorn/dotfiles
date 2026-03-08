@@ -13,7 +13,7 @@ alert() {
     -H "Title: $title" \
     -H "Priority: $priority" \
     -H "Tags: $tags" \
-    -d "$body" \
+    -d "$(echo -e "From: health-check (daily 08:00)\n\n$body")" \
     "$NTFY_URL"
 }
 

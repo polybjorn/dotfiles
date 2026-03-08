@@ -21,7 +21,7 @@ alert_failure() {
     -H "Title: Backup Verification Error" \
     -H "Priority: high" \
     -H "Tags: rotating_light,warning" \
-    -d "Verification script failed on $HOST: ${1:-unknown error}" \
+    -d "$(echo -e "From: backup-verify (daily 03:30)\n\nVerification script failed on $HOST: ${1:-unknown error}")" \
     "$NTFY_URL" || true
 }
 trap 'alert_failure "unexpected error on line $LINENO"' ERR
@@ -197,7 +197,7 @@ if [ -n "$PROBLEMS" ]; then
     -H "Title: Backup Verification Failed" \
     -H "Priority: high" \
     -H "Tags: rotating_light,warning" \
-    -d "$(echo -e "Verification issues on $HOST:\n$PROBLEMS")" \
+    -d "$(echo -e "From: backup-verify (daily 03:30)\n\nVerification issues on $HOST:\n$PROBLEMS")" \
     "$NTFY_URL" || true
 else
   echo "All checks passed."

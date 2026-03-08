@@ -13,7 +13,7 @@ alert() {
         -H "Title: $title" \
         -H "Priority: $priority" \
         -H "Tags: $tags" \
-        -d "$body" \
+        -d "$(echo -e "From: wifi-watchdog (every 2m)\n\n$body")" \
         "$NTFY_URL"
 }
 
