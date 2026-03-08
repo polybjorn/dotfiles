@@ -26,7 +26,7 @@ notify() {
     "$NTFY"
 }
 
-trap 'notify "high" "Package Maintenance Failed" "rotating_light,warning" "pkg-maintenance.sh failed on $HOST (line $LINENO)"' ERR
+trap 'notify "high" "Package Maintenance Failed" "rotating_light,warning" "From: pkg-maintenance (weekly Sun 09:00)\n\npkg-maintenance.sh failed on $HOST (line $LINENO)"' ERR
 
 echo "=== Package maintenance started: $(date) ==="
 
@@ -100,7 +100,7 @@ if [ -z "$LOG" ]; then
   LOG="Everything up to date."
 fi
 
-notify "default" "Package Maintenance" "package,white_check_mark" \
-  "$(echo -e "Maintenance complete on $HOST:\n$LOG")"
+notify "default" "Package Maintenance" "package,white_check_mark,calendar" \
+  "$(echo -e "Scheduled: weekly (Sun 09:00)\n\nMaintenance complete on $HOST:\n$LOG")"
 
 echo "=== Package maintenance complete ==="

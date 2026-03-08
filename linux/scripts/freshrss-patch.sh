@@ -33,6 +33,6 @@ if [ ${#fixed[@]} -gt 0 ]; then
     curl -s -o /dev/null \
         -H "Title: FreshRSS patches reapplied" \
         -H "Tags: wrench" \
-        -d "$msg" \
+        -d "$(echo -e "From: freshrss-patch (on health-check)\n\n$msg")" \
         "$NTFY_URL"
 fi

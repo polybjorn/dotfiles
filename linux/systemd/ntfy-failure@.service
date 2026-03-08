@@ -7,5 +7,5 @@ ExecStart=/usr/bin/curl -s -o /dev/null \
     -H "Title: %i failed" \
     -H "Priority: high" \
     -H "Tags: skull,warning" \
-    -d "Service %i failed on pi-server" \
+    -d "From: systemd (on-failure)\n\nService %i failed on pi-server" \
     http://localhost:2586/pi-alerts

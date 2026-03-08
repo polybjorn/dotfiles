@@ -22,8 +22,17 @@
       - wifi-watchdog.timer
       - rss-bridge-cache-cleanup.timer
       - freshrss-yt-favicons.timer
+      - freshrss-autoupdate.timer
 
   pre_tasks:
+    - name: Create autoupdate state directory
+      file:
+        path: /var/lib/freshrss-autoupdate
+        state: directory
+        owner: root
+        group: root
+        mode: "0755"
+
     - name: Create backup directories
       file:
         path: "{{ item }}"
@@ -35,10 +44,10 @@
         - "{{ user_home }}/Vault/Backups"
 
   roles:
-    - sshd
-    - scripts
-    - systemd
-    - nginx
-    - configs
-    - dashboard
-    - sudoers
+    - { role: sshd, tags: [sshd] }
+    - { role: scripts, tags: [scripts] }
+    - { role: systemd, tags: [systemd] }
+    - { role: nginx, tags: [nginx] }
+    - { role: configs, tags: [configs] }
+    - { role: dashboard, tags: [dashboard] }
+    - { role: sudoers, tags: [sudoers] }

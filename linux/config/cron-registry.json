@@ -54,6 +54,13 @@
       "schedule": "1st 05:00"
     },
     {
+      "id": "freshrss-autoupdate",
+      "name": "Service autoupdate",
+      "description": "Auto-update RSS-Bridge & FreshRSS",
+      "icon": "/icons/freshrss.png",
+      "schedule": "09:00"
+    },
+    {
       "id": "rss-bridge-cache-cleanup",
       "name": "RSS-Bridge cache",
       "description": "Clean stale cache files",

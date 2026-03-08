@@ -107,6 +107,7 @@ Secrets are separated: chezmoi uses age encryption, Ansible uses a gitignored va
 | nightmode | 01:00-07:00 | Disable/enable nginx sites |
 | freshrss-refresh | */15 07-23h | FreshRSS feed refresh |
 | freshrss-digest | Mon 08:00 | Weekly release/feed report |
+| freshrss-autoupdate | 09:00 daily | Auto-update RSS-Bridge & FreshRSS |
 | freshrss-yt-favicons | 1st 05:00 | YouTube favicon refresh |
 | rss-bridge-cache-cleanup | 04:00 daily | RSS-Bridge cache cleanup |
 | wifi-watchdog | Every 2 min | WiFi reconnection |

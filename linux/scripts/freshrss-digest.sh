@@ -53,8 +53,8 @@ if [ -n "$releases" ]; then
 
     curl -s -o /dev/null \
         -H "Title: Software release digest" \
-        -H "Tags: package" \
-        -d "$body" \
+        -H "Tags: package,calendar" \
+        -d "$(echo -e "Scheduled: weekly (Mon 08:00)\n\n$body")" \
         "$NTFY_URL"
 fi
 
@@ -74,10 +74,7 @@ extract_version() {
 get_local_version() {
     case "$1" in
         GoToSocial)    /opt/gotosocial/gotosocial --version 2>/dev/null ;;
-        Syncthing)     syncthing --version 2>/dev/null ;;
-        ntfy)          ntfy 2>&1 ;;
         headscale)     headscale version 2>/dev/null ;;
-        Composer)      composer --version 2>/dev/null ;;
         FreshRSS)      grep FRESHRSS_VERSION /var/www/FreshRSS/constants.php 2>/dev/null ;;
         Radicale)      /opt/radicale/bin/radicale --version 2>/dev/null ;;
         "Firefly III") grep "'version'" /var/www/firefly-iii/config/firefly.php 2>/dev/null ;;
@@ -87,7 +84,7 @@ get_local_version() {
 
 outdated=""
 up_to_date=0
-for service in "GoToSocial" "Syncthing" "ntfy" "headscale" "Composer" "FreshRSS" "Radicale" "Firefly III" "RSS-Bridge"; do
+for service in "GoToSocial" "headscale" "FreshRSS" "Radicale" "Firefly III" "RSS-Bridge"; do
     local_raw=$(get_local_version "$service") || true
     [ -z "$local_raw" ] && continue
     local_ver=$(extract_version "$local_raw") || true
@@ -120,8 +117,8 @@ if [ -n "$outdated" ]; then
     [ "$up_to_date" -gt 0 ] && ver_body+=$'\n'"$up_to_date service(s) up to date"
     curl -s -o /dev/null \
         -H "Title: Services behind latest release" \
-        -H "Tags: arrow_up" \
-        -d "$ver_body" \
+        -H "Tags: arrow_up,calendar" \
+        -d "$(echo -e "Scheduled: weekly (Mon 08:00)\n\n$ver_body")" \
         "$NTFY_URL"
 fi
 
@@ -148,8 +145,8 @@ if [ -n "$problems" ]; then
 
     curl -s -o /dev/null \
         -H "Title: FreshRSS feed problems" \
-        -H "Tags: warning" \
-        -d "$msg" \
+        -H "Tags: warning,calendar" \
+        -d "$(echo -e "Scheduled: weekly (Mon 08:00)\n\n$msg")" \
         "$NTFY_URL"
 fi
 
@@ -170,8 +167,8 @@ if [ -f "$REPO_OPML" ]; then
         drift+=$'\n\nUpdate repo: cd ~/repositories/dotfiles && sudo -u www-data php /var/www/FreshRSS/cli/export-opml-for-user.php --user freshrss > linux/config/freshrss-feeds.opml'
         curl -s -o /dev/null \
             -H "Title: FreshRSS feed drift detected" \
-            -H "Tags: warning" \
-            -d "$drift" \
+            -H "Tags: warning,calendar" \
+            -d "$(echo -e "Scheduled: weekly (Mon 08:00)\n\n$drift")" \
             "$NTFY_URL"
     fi
 fi
