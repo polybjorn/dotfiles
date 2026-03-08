@@ -100,7 +100,7 @@ fi
 
 # --- KeePassXC database integrity ---
 echo "Checking KeePassXC database..."
-KDBX="$HOME/Vault/Personal/Authentication/Passwords.kdbx"
+KDBX="$HOME/Vault/Authentication/Passwords.kdbx"
 if [ ! -f "$KDBX" ]; then
   PROBLEMS="${PROBLEMS}- KeePassXC database not found\n"
 else
