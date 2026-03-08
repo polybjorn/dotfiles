@@ -31,8 +31,19 @@ chezmoi apply
 ```sh
 cp linux/ansible/vars/private.yml.example linux/ansible/vars/private.yml
 # Edit private.yml with your values
-ansible-playbook linux/ansible/site.yml
+cd linux/ansible && ansible-playbook site.yml
 ```
+
+Ansible runs from `linux/ansible/` (where `ansible.cfg` and `inventory.ini` live).
+Output only shows changed/failed tasks. Use `--tags` for targeted deploys:
+
+```sh
+ansible-playbook site.yml --tags configs    # only deploy configs
+ansible-playbook site.yml --tags systemd    # only deploy timers/services
+ansible-playbook site.yml --check           # dry-run, no changes
+```
+
+Available tags: `sshd`, `scripts`, `systemd`, `nginx`, `configs`, `dashboard`, `sudoers`
 
 ## Architecture
 
