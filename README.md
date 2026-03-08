@@ -97,16 +97,16 @@ Secrets are separated: chezmoi uses age encryption, Ansible uses a gitignored va
 | Agent | Schedule | Purpose |
 |---|---|---|
 | backup-claude | On file change | CLAUDE.md backup to Vault |
-| backup | 03:00 daily | Config tarball to Vault |
-| backup-verify | 03:30 daily | Verify backup freshness |
-| health-check | 08:00 daily | System diagnostics, ntfy alerts |
+| backup | 09:00 daily | Config tarball to Vault |
+| backup-verify | 09:05 daily | Verify backup freshness |
+| health-check | 09:10 daily | System diagnostics, ntfy alerts |
 | stats-push | Every 5 min | Push stats to Pi dashboard |
-| pkg-maintenance | Sun 09:00 | Package update/cleanup |
+| pkg-maintenance | Sun 10:00 | Package update/cleanup |
 | obsidian-new-year | Jan 1 09:00 | Create yearly/quarterly/monthly note structure |
-| obsidian-weekly-note | Mon 00:05 | Generate weekly planning note |
+| obsidian-weekly-note | Mon 09:15 | Generate weekly planning note |
 | photo-sort | Every 30 min | Sort photos by EXIF date |
-| vault-maintenance-weekly | Mon 01:00 | Orphan fixer + broken link check |
-| vault-maintenance-monthly | 1st 02:00 | Frontmatter audit + tag scan |
+| vault-maintenance-weekly | Mon 09:30 | Orphan fixer + broken link check |
+| vault-maintenance-monthly | 1st 09:45 | Frontmatter audit + tag scan |
 
 ### Linux (systemd timers)
 
