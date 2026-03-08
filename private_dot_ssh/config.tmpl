@@ -14,7 +14,7 @@ Host *
   AddKeysToAgent yes
   IdentitiesOnly yes
   ServerAliveInterval 60
-  ServerAliveCountDown 3
+  ServerAliveCountMax 3
   ControlMaster auto
   ControlPath ~/.ssh/sockets/%r@%h-%p
   ControlPersist 10m

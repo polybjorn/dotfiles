@@ -4,34 +4,11 @@
 set -euo pipefail
 
 NTFY_URL="http://localhost:2586/pi-alerts"
-MAIN_JS="/var/www/FreshRSS/p/scripts/main.js"
 NORD_CSS="/var/www/FreshRSS/p/themes/Nord/nord.css"
 NORD_RTL="/var/www/FreshRSS/p/themes/Nord/nord.rtl.css"
 YT_BRIDGE="/var/www/rss-bridge/bridges/YoutubeBridge.php"
 
 fixed=()
-
-# --- Favicon: detect RFP (Resist Fingerprinting) and skip canvas replacement ---
-# Browsers with RFP (LibreWolf, Firefox+arkenfox) corrupt canvas.toDataURL()
-# output, producing a striped/garbled favicon. FreshRSS doesn't detect this and
-# replaces the good static favicon with corrupted data. This patch adds a pixel
-# verification check: draw a known color, read it back, and only proceed if it
-# matches. If RFP is active, the read-back will be randomized and the static
-# favicon is preserved.
-if grep -q "link.href = canvas.toDataURL('image/png');" "$MAIN_JS" 2>/dev/null; then
-    if ! grep -q "RFP canvas detection" "$MAIN_JS" 2>/dev/null; then
-        sed -i "/link\.href = canvas\.toDataURL('image\/png');/i\\
-\\t\\t\\t// RFP canvas detection: verify canvas data is not corrupted\\
-\\t\\t\\tconst testCanvas = document.createElement('canvas');\\
-\\t\\t\\ttestCanvas.width = testCanvas.height = 1;\\
-\\t\\t\\tconst testCtx = testCanvas.getContext('2d');\\
-\\t\\t\\ttestCtx.fillStyle = '#FF0000';\\
-\\t\\t\\ttestCtx.fillRect(0, 0, 1, 1);\\
-\\t\\t\\tconst p = testCtx.getImageData(0, 0, 1, 1).data;\\
-\\t\\t\\tif (p[0] !== 255 || p[1] !== 0 || p[2] !== 0) return;" "$MAIN_JS"
-        fixed+=("main.js RFP favicon detection")
-    fi
-fi
 
 # --- Nord theme: remove favicon background, make circular ---
 for css in "$NORD_CSS" "$NORD_RTL"; do
