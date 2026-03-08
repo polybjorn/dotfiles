@@ -72,6 +72,17 @@ fi
 if [[ "$OSTYPE" == darwin* ]]; then
   alias pi='ssh admin@${PI_HOST:-pi-server}'
   alias deploy='cd ~/repositories/polybjorn-en && git add . && git commit -m "Update" && git push origin main'
+
+  # ── chezmoi + Ansible ──────────────────────────────────
+  alias cm='chezmoi'
+  alias cma='chezmoi apply'
+  alias cmd='chezmoi diff'
+  alias cme='chezmoi edit'
+  alias cms='chezmoi status'
+  alias ans='cd ~/repositories/dotfiles/linux/ansible && ansible-playbook site.yml'
+  alias anst='cd ~/repositories/dotfiles/linux/ansible && ansible-playbook site.yml --tags'
+  alias ansc='cd ~/repositories/dotfiles/linux/ansible && ansible-playbook site.yml --check'
+  alias pideploy='ssh admin@${PI_HOST:-pi-server} "cd ~/repositories/dotfiles && git pull" && ans'
 fi
 
 # ── Convenience ─────────────────────────────────────────
