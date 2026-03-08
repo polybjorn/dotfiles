@@ -1,0 +1,10 @@
+---
+- name: restart ntfy
+  systemd:
+    name: ntfy
+    state: restarted
+
+- name: restart cloudflared
+  systemd:
+    name: cloudflared
+    state: restarted

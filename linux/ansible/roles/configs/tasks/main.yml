@@ -15,11 +15,13 @@
   template:
     src: ntfy-server.yml.j2
     dest: /etc/ntfy/server.yml
+  notify: restart ntfy
 
 - name: Deploy cloudflared config from template
   template:
     src: cloudflared.yml.j2
     dest: /etc/cloudflared/config.yml
+  notify: restart cloudflared
 
 - name: Create stats-api environment file
   copy:
@@ -57,6 +59,11 @@
     dest: /etc/logrotate.d/pi-server
     remote_src: true
 
+- name: Check if rss-bridge is installed
+  stat:
+    path: /var/www/rss-bridge
+  register: rss_bridge_dir
+
 - name: Copy rss-bridge config (if installed)
   copy:
     src: "{{ dotfiles_dir }}/linux/config/rss-bridge.ini.php"
@@ -64,8 +71,7 @@
     owner: www-data
     group: www-data
     remote_src: true
-  when: "'/var/www/rss-bridge' is directory"
-  ignore_errors: true
+  when: rss_bridge_dir.stat.exists
 
 - name: Copy custom rss-bridge bridges (if installed)
   copy:
@@ -74,5 +80,4 @@
     owner: www-data
     group: www-data
     remote_src: true
-  when: "'/var/www/rss-bridge' is directory"
-  ignore_errors: true
+  when: rss_bridge_dir.stat.exists

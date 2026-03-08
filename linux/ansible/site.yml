@@ -44,10 +44,10 @@
         - "{{ user_home }}/Vault/Backups"
 
   roles:
-    - sshd
-    - scripts
-    - systemd
-    - nginx
-    - configs
-    - dashboard
-    - sudoers
+    - { role: sshd, tags: [sshd] }
+    - { role: scripts, tags: [scripts] }
+    - { role: systemd, tags: [systemd] }
+    - { role: nginx, tags: [nginx] }
+    - { role: configs, tags: [configs] }
+    - { role: dashboard, tags: [dashboard] }
+    - { role: sudoers, tags: [sudoers] }
