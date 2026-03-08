@@ -1,0 +1,6 @@
+[Unit]
+Description=Auto-update whitelisted services via FreshRSS feeds
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/freshrss-autoupdate.sh

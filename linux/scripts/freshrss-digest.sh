@@ -74,10 +74,7 @@ extract_version() {
 get_local_version() {
     case "$1" in
         GoToSocial)    /opt/gotosocial/gotosocial --version 2>/dev/null ;;
-        Syncthing)     syncthing --version 2>/dev/null ;;
-        ntfy)          ntfy 2>&1 ;;
         headscale)     headscale version 2>/dev/null ;;
-        Composer)      composer --version 2>/dev/null ;;
         FreshRSS)      grep FRESHRSS_VERSION /var/www/FreshRSS/constants.php 2>/dev/null ;;
         Radicale)      /opt/radicale/bin/radicale --version 2>/dev/null ;;
         "Firefly III") grep "'version'" /var/www/firefly-iii/config/firefly.php 2>/dev/null ;;
@@ -87,7 +84,7 @@ get_local_version() {
 
 outdated=""
 up_to_date=0
-for service in "GoToSocial" "Syncthing" "ntfy" "headscale" "Composer" "FreshRSS" "Radicale" "Firefly III" "RSS-Bridge"; do
+for service in "GoToSocial" "headscale" "FreshRSS" "Radicale" "Firefly III" "RSS-Bridge"; do
     local_raw=$(get_local_version "$service") || true
     [ -z "$local_raw" ] && continue
     local_ver=$(extract_version "$local_raw") || true
