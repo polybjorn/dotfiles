@@ -1,5 +1,6 @@
 # dotfiles
 
+HEAD
 Cross-platform dotfiles repo for macOS and Linux (Raspberry Pi, Proxmox, arch-server).
 Managed by **chezmoi** (user configs) and **Ansible** (server infra).
 
@@ -31,7 +32,7 @@ dotfiles/                              # chezmoi source directory
 │   ├── executable_ntfy                # cross-platform
 │   ├── executable_backup-status       # cross-platform
 │   ├── executable_syncthing-status    # cross-platform
-│   ├── executable_pkg-maintenance.sh   # cross-platform (brew/apt)
+│   ├── executable_pkg-maintenance.sh   # cross-platform (brew/pacman/apt)
 │   ├── executable_backup.sh           # macOS only (.chezmoiignore)
 │   ├── executable_health-check.sh     # macOS only
 │   ├── executable_stats-push.sh       # macOS only
@@ -135,6 +136,12 @@ Dry-run: `ansible-playbook linux/ansible/site.yml --check --diff`
 | freshrss-yt-favicons | 1st 05:00 | freshrss-yt-favicons.sh |
 | rss-bridge-cache-cleanup | 04:00 daily | rss-bridge-cache-cleanup.sh |
 | wifi-watchdog | Every 2 min | wifi-watchdog.sh |
+
+## Arch server systemd timers
+
+| Timer | Schedule | Script |
+|---|---|---|
+| pkg-maintenance | Sun 09:00 | pkg-maintenance.sh (chezmoi) |
 
 ## Key paths
 

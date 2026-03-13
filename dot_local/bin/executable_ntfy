@@ -31,7 +31,7 @@ MESSAGE="${2:-$TITLE}"
 if [[ "$OSTYPE" == darwin* ]]; then
   NTFY_ENDPOINT="${NTFY_URL:-https://localhost:2587}/$TOPIC"
 else
-  NTFY_ENDPOINT="http://localhost:2586/$TOPIC"
+  NTFY_ENDPOINT="${NTFY_URL:-http://localhost:2586}/$TOPIC"
 fi
 
 curl -s -o /dev/null \
