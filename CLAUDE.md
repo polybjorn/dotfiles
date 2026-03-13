@@ -47,7 +47,7 @@ dotfiles/                              # chezmoi source directory
 │   ├── launchd/                       # LaunchAgent plists (copied by run_after)
 │   └── defaults.sh                    # macOS system preferences (opt-in)
 ├── linux/
-│   ├── scripts/                       # Pi server scripts → /usr/local/bin/
+│   ├── scripts/                       # Server scripts → /usr/local/bin/
 │   ├── systemd/                       # systemd units (copies) + overrides/
 │   ├── config/                        # server configs (apt, logrotate, etc.)
 │   ├── ansible/                       # Ansible playbook + roles
@@ -78,14 +78,17 @@ chezmoi replaces symlinks with managed file copies. Templates handle
 platform differences (`.zprofile`, `local.gitconfig`). `run_after_` scripts
 handle LaunchAgents, p10k, and Brewfile.
 
-### Pi server infrastructure (Ansible)
+### Server infrastructure (Ansible)
 
 ```sh
 cd ~/repositories/dotfiles
-ansible-playbook linux/ansible/site.yml
+ansible-playbook linux/ansible/site.yml              # all servers
+ansible-playbook linux/ansible/site.yml --limit pi    # Pi only
+ansible-playbook linux/ansible/site.yml --limit arch  # arch-server only
 ```
 
-Runs from Mac over SSH. Manages scripts, systemd, nginx, configs, dashboard, sudoers.
+Runs from Mac over SSH. Pi play: scripts, systemd, nginx, configs, dashboard, sudoers.
+Arch play: scripts, systemd, passwordless sudo, backup dirs.
 Dry-run: `ansible-playbook linux/ansible/site.yml --check --diff`
 
 ### Legacy fallbacks
@@ -141,6 +144,7 @@ Dry-run: `ansible-playbook linux/ansible/site.yml --check --diff`
 
 | Timer | Schedule | Script |
 |---|---|---|
+| backup-arch | 03:00 daily | backup-arch.sh |
 | pkg-maintenance | Sun 09:00 | pkg-maintenance.sh (chezmoi) |
 
 ## Key paths
@@ -150,6 +154,6 @@ Dry-run: `ansible-playbook linux/ansible/site.yml --check --diff`
 - Private config: `~/.config/dotfiles/env` (chezmoi, age-encrypted)
 - Platform git overrides: `~/.config/git/local.gitconfig` (chezmoi template)
 - User scripts: `~/.local/bin/` (chezmoi-managed copies)
-- Server scripts: `/usr/local/bin/` (Ansible symlinks, Pi only)
+- Server scripts: `/usr/local/bin/` (Ansible symlinks, Pi + arch-server)
 - ZDOTDIR: `~/.config/zsh/`
 - age key: `~/.config/chezmoi/key.txt`
