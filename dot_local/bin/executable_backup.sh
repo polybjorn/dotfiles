@@ -7,7 +7,7 @@ set -euo pipefail
 
 [[ -f "$HOME/.config/dotfiles/env" ]] && source "$HOME/.config/dotfiles/env"
 
-HOST=$(hostname -s)
+HOST=$(scutil --get LocalHostName 2>/dev/null || hostname -s)
 BACKUP_DIR="$HOME/Vault/Backups/$HOST"
 NTFY_URL="${NTFY_URL:-https://localhost:2587}/mac-alerts"
 RETENTION_DAYS=7
@@ -20,7 +20,7 @@ alert_failure() {
     -H "Title: Backup Failed" \
     -H "Priority: high" \
     -H "Tags: rotating_light,warning" \
-    -d "$(echo -e "From: backup (daily 03:00)\n\nBackup failed on $HOST: $msg")" \
+    -d "$(echo -e "From: backup (daily 09:00)\n\nBackup failed on $HOST: $msg")" \
     "$NTFY_URL" || true
 }
 

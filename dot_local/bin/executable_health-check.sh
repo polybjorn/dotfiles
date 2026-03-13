@@ -4,7 +4,7 @@
 [[ -f "$HOME/.config/dotfiles/env" ]] && source "$HOME/.config/dotfiles/env"
 
 NTFY_URL="${NTFY_URL:-https://localhost:2587}/mac-alerts"
-HOST=$(hostname -s)
+HOST=$(scutil --get LocalHostName 2>/dev/null || hostname -s)
 PI_HOST="${PI_HOST:-admin@pi-server}"
 ARCH_HOST="${ARCH_HOST:-arch-server}"
 

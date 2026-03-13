@@ -7,7 +7,7 @@ set -euo pipefail
 
 [[ -f "$HOME/.config/dotfiles/env" ]] && source "$HOME/.config/dotfiles/env"
 
-HOST=$(hostname -s 2>/dev/null || hostname)
+HOST=$(scutil --get LocalHostName 2>/dev/null || hostname -s)
 LOG=""
 
 if [[ "$OSTYPE" == darwin* ]]; then
