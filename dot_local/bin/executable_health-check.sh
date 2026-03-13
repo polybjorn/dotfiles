@@ -184,8 +184,8 @@ fi
 # --- Arch server services (via SSH, skip if unreachable) ---
 if ssh -o ConnectTimeout=5 -o BatchMode=yes "$ARCH_HOST" true 2>/dev/null; then
   ARCH_DOWN=""
-  for svc in httpd mariadb postgresql docker tailscaled jellyfin paperless-webserver \
-    navidrome sonarr prowlarr bazarr radicale syncthing@admin; do
+  for svc in postgresql docker tailscaled jellyfin paperless-webserver \
+    navidrome sonarr prowlarr bazarr sabnzbd qbittorrent-nox syncthing@admin; do
     STATUS=$(ssh "$ARCH_HOST" "systemctl is-active $svc 2>/dev/null" 2>/dev/null)
     if [ "$STATUS" != "active" ]; then
       ARCH_DOWN="${ARCH_DOWN}- $svc ($STATUS)\n"
