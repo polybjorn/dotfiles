@@ -6,6 +6,7 @@
 NTFY_URL="${NTFY_URL:-https://localhost:2587}/mac-alerts"
 HOST=$(hostname -s)
 PI_HOST="${PI_HOST:-admin@pi-server}"
+ARCH_HOST="${ARCH_HOST:-arch-server}"
 
 alert() {
   local priority="$1" title="$2" tags="$3" body="$4"
@@ -177,5 +178,44 @@ if ssh -o ConnectTimeout=5 -o BatchMode=yes "$PI_HOST" true 2>/dev/null; then
   if [ -n "$PI_STALE" ]; then
     alert "default" "Pi Timer(s) Stale" "hourglass_flowing_sand,warning" \
       "$(echo -e "Timers with no recent trigger on pi-server:\n$PI_STALE")"
+  fi
+fi
+
+# --- Arch server services (via SSH, skip if unreachable) ---
+if ssh -o ConnectTimeout=5 -o BatchMode=yes "$ARCH_HOST" true 2>/dev/null; then
+  ARCH_DOWN=""
+  for svc in httpd mariadb postgresql docker tailscaled jellyfin paperless-webserver \
+    navidrome sonarr prowlarr bazarr radicale syncthing@admin; do
+    STATUS=$(ssh "$ARCH_HOST" "systemctl is-active $svc 2>/dev/null" 2>/dev/null)
+    if [ "$STATUS" != "active" ]; then
+      ARCH_DOWN="${ARCH_DOWN}- $svc ($STATUS)\n"
+    fi
+  done
+
+  if [ -n "$ARCH_DOWN" ]; then
+    alert "high" "Arch Service(s) Down" "skull,warning" \
+      "$(echo -e "Dead services on arch-server:\n$ARCH_DOWN")"
+  fi
+
+  # Check key Arch timers
+  ARCH_STALE=""
+  for timer in pkg-maintenance; do
+    LAST=$(ssh "$ARCH_HOST" "systemctl show ${timer}.timer -p LastTriggerUSec --value 2>/dev/null" 2>/dev/null)
+    if [ -z "$LAST" ] || [ "$LAST" = "n/a" ]; then
+      ARCH_STALE="${ARCH_STALE}- ${timer}.timer (never triggered)\n"
+    fi
+  done
+
+  if [ -n "$ARCH_STALE" ]; then
+    alert "default" "Arch Timer(s) Stale" "hourglass_flowing_sand,warning" \
+      "$(echo -e "Timers with no recent trigger on arch-server:\n$ARCH_STALE")"
+  fi
+
+  # Security audit (arch-audit)
+  ARCH_VULNS=$(ssh "$ARCH_HOST" "arch-audit --upgradable 2>/dev/null" 2>/dev/null)
+  if [ -n "$ARCH_VULNS" ]; then
+    VULN_COUNT=$(echo "$ARCH_VULNS" | wc -l | tr -d ' ')
+    alert "high" "Arch Security Updates" "lock,warning" \
+      "$(echo -e "${VULN_COUNT} vulnerable package(s) on arch-server:\n$ARCH_VULNS")"
   fi
 fi
