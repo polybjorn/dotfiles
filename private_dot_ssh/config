@@ -9,6 +9,17 @@ Host arch-server
   IdentityFile ~/.ssh/id_ed25519
   IdentitiesOnly yes
 
+Host proxmox
+  User root
+  IdentityFile ~/.ssh/id_ed25519
+  IdentitiesOnly yes
+
+Host mac
+  HostName baa-macbook-m4
+  User bjanda
+  IdentityFile ~/.ssh/id_ed25519
+  IdentitiesOnly yes
+
 # -- Defaults --------------------------------------------------
 Host *
   AddKeysToAgent yes

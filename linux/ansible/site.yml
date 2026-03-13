@@ -80,10 +80,10 @@
         - "{{ user_home }}/backups"
         - "{{ user_home }}/Vault/Backups"
 
-    - name: Deploy sudoers for postgres backup
+    - name: Deploy passwordless sudo for admin
       copy:
-        content: "admin ALL=(postgres) NOPASSWD: /usr/bin/pg_dumpall\n"
-        dest: /etc/sudoers.d/020_arch-backup
+        content: "admin ALL=(ALL) NOPASSWD: ALL\n"
+        dest: /etc/sudoers.d/010_admin-nopasswd
         mode: "0440"
         validate: visudo -cf %s
 

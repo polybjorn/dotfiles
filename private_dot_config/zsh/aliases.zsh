@@ -90,14 +90,23 @@ alias cmd='chezmoi diff'
 alias cme='chezmoi edit'
 alias cms='chezmoi status'
 
-# ── SSH + Ansible (mac only) ──────────────────────────
+# ── SSH ──────────────────────────────────────────────
+alias pi='ssh pi-server'
+alias arch='ssh arch-server'
+alias prox='ssh proxmox'
 if [[ "$OSTYPE" == darwin* ]]; then
-  alias pi='ssh admin@${PI_HOST:-pi-server}'
+  alias mac='echo "Already on Mac"'
+else
+  alias mac='ssh mac'
+fi
+
+# ── Ansible (mac only) ──────────────────────────────
+if [[ "$OSTYPE" == darwin* ]]; then
   alias deploy='cd ~/repositories/polybjorn-en && git add . && git commit -m "Update" && git push origin main'
   alias ans='cd ~/repositories/dotfiles/linux/ansible && ansible-playbook site.yml'
   alias anst='cd ~/repositories/dotfiles/linux/ansible && ansible-playbook site.yml --tags'
   alias ansc='cd ~/repositories/dotfiles/linux/ansible && ansible-playbook site.yml --check'
-  alias pideploy='ssh admin@${PI_HOST:-pi-server} "cd ~/repositories/dotfiles && git pull" && ans'
+  alias pideploy='ssh pi-server "cd ~/repositories/dotfiles && git pull" && ans'
 fi
 
 # ── Convenience ─────────────────────────────────────────
