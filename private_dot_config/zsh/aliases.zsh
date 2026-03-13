@@ -6,12 +6,14 @@ alias ..='cd ..'
 alias ...='cd ../..'
 alias ....='cd ../../..'
 alias cd='z'
-alias ls='eza --icons --group-directories-first'
-alias l='eza -la --icons --group-directories-first --git'
-alias ll='eza -lah --icons --group-directories-first --git'
-alias la='eza -A --icons --group-directories-first'
-alias lt='eza --tree --icons --level=2'
-alias ltt='eza --tree --icons --level=3'
+if command -v eza &>/dev/null; then
+  alias ls='eza --icons --group-directories-first'
+  alias l='eza -la --icons --group-directories-first --git'
+  alias ll='eza -lah --icons --group-directories-first --git'
+  alias la='eza -A --icons --group-directories-first'
+  alias lt='eza --tree --icons --level=2'
+  alias ltt='eza --tree --icons --level=3'
+fi
 
 # ── Docker (~/docker/docker-compose.yml) ─────────────────
 alias dpull='docker compose -f ~/docker/docker-compose.yml pull'
@@ -29,9 +31,18 @@ if [[ "$OSTYPE" == darwin* ]]; then
   alias bat-themes='bat --list-themes | fzf --preview="bat --theme={} --color=always ${ZDOTDIR}/.zshrc"'
   alias fd='fd --hidden --follow'
 else
-  alias cat='batcat --paging=never'
-  alias batp='batcat'
-  alias fd='fdfind --hidden --follow'
+  if command -v batcat &>/dev/null; then
+    alias cat='batcat --paging=never'
+    alias batp='batcat'
+  elif command -v bat &>/dev/null; then
+    alias cat='bat --paging=never'
+    alias batp='bat'
+  fi
+  if command -v fdfind &>/dev/null; then
+    alias fd='fdfind --hidden --follow'
+  elif command -v fd &>/dev/null; then
+    alias fd='fd --hidden --follow'
+  fi
 fi
 alias ccat='/bin/cat'
 alias ffd='/usr/bin/find'
@@ -58,27 +69,31 @@ if [[ "$OSTYPE" == darwin* ]]; then
   alias wifi='networksetup -getairportnetwork en0'
   alias localip='ipconfig getifaddr en0'
 else
-  alias update='sudo apt update && sudo apt upgrade -y && sudo apt autoremove -y'
+  if command -v pacman &>/dev/null; then
+    alias update='sudo pacman -Syu'
+  elif command -v apt &>/dev/null; then
+    alias update='sudo apt update && sudo apt upgrade -y && sudo apt autoremove -y'
+  fi
   alias ports='ss -tlnp'
   alias services='systemctl list-units --type=service --state=running'
   alias memuse='free -h'
   alias cpuuse='ps aux --sort=-%cpu | head -n 10'
   alias localip="ip -4 addr show | grep inet | grep -v '127.0.0.1' | awk '{print \$2}'"
-  alias temp='vcgencmd measure_temp'
-  alias throttle='vcgencmd get_throttled'
+  command -v vcgencmd &>/dev/null && alias temp='vcgencmd measure_temp'
+  command -v vcgencmd &>/dev/null && alias throttle='vcgencmd get_throttled'
 fi
 
-# ── SSH (mac only) ───────────────────────────────────────
+# ── chezmoi ────────────────────────────────────────────
+alias cm='chezmoi'
+alias cma='chezmoi apply'
+alias cmd='chezmoi diff'
+alias cme='chezmoi edit'
+alias cms='chezmoi status'
+
+# ── SSH + Ansible (mac only) ──────────────────────────
 if [[ "$OSTYPE" == darwin* ]]; then
   alias pi='ssh admin@${PI_HOST:-pi-server}'
   alias deploy='cd ~/repositories/polybjorn-en && git add . && git commit -m "Update" && git push origin main'
-
-  # ── chezmoi + Ansible ──────────────────────────────────
-  alias cm='chezmoi'
-  alias cma='chezmoi apply'
-  alias cmd='chezmoi diff'
-  alias cme='chezmoi edit'
-  alias cms='chezmoi status'
   alias ans='cd ~/repositories/dotfiles/linux/ansible && ansible-playbook site.yml'
   alias anst='cd ~/repositories/dotfiles/linux/ansible && ansible-playbook site.yml --tags'
   alias ansc='cd ~/repositories/dotfiles/linux/ansible && ansible-playbook site.yml --check'

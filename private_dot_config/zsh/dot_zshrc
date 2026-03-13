@@ -41,6 +41,8 @@ if [[ "$OSTYPE" == darwin* ]]; then
   ZSH_PLUGIN_DIR="/opt/homebrew/share"
 elif [[ -d "${ZDOTDIR}/plugins" ]]; then
   ZSH_PLUGIN_DIR="${ZDOTDIR}/plugins"
+elif [[ -d "/usr/share/zsh/plugins" ]]; then
+  ZSH_PLUGIN_DIR="/usr/share/zsh/plugins"
 else
   ZSH_PLUGIN_DIR="/usr/share"
 fi

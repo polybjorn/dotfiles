@@ -1,7 +1,7 @@
 # dotfiles
 
-Cross-platform dotfiles repo for macOS and Linux (Raspberry Pi).
-Managed by **chezmoi** (user configs) and **Ansible** (Pi server infra).
+Cross-platform dotfiles repo for macOS and Linux (Raspberry Pi, Proxmox, arch-server).
+Managed by **chezmoi** (user configs) and **Ansible** (server infra).
 
 ## Repo structure
 
@@ -110,16 +110,16 @@ Dry-run: `ansible-playbook linux/ansible/site.yml --check --diff`
 | Agent | Schedule | Script |
 |---|---|---|
 | backup-claude | WatchPaths | /bin/cp (no script) |
-| backup | 03:00 daily | backup.sh |
-| backup-verify | 03:30 daily | backup-verify.sh |
-| health-check | 08:00 daily | health-check.sh |
+| backup | 09:00 daily | backup.sh |
+| backup-verify | 09:05 daily | backup-verify.sh |
+| health-check | 09:10 daily | health-check.sh |
 | stats-push | Every 5 min | stats-push.sh |
-| pkg-maintenance | Sun 09:00 | pkg-maintenance.sh |
-| obsidian-weekly-note | Mon 00:05 | obsidian-weekly-note.py |
+| pkg-maintenance | Sun 10:00 | pkg-maintenance.sh |
 | obsidian-new-year | Jan 1 09:00 | obsidian-new-year.sh |
+| obsidian-weekly-note | Mon 09:15 | obsidian-weekly-note.py |
 | photo-sort | Every 30 min | photo-sort.sh |
-| vault-maintenance-weekly | Mon 01:00 | vault-maintenance.py (paused) |
-| vault-maintenance-monthly | 1st 02:00 | vault-maintenance.py (paused) |
+| vault-maintenance-weekly | Mon 09:30 | vault-maintenance.py |
+| vault-maintenance-monthly | 1st 09:45 | vault-maintenance.py |
 
 ## Pi systemd timers
 
@@ -131,6 +131,7 @@ Dry-run: `ansible-playbook linux/ansible/site.yml --check --diff`
 | nightmode-on/off | 01:00 / 07:00 | nightmode.sh |
 | freshrss-refresh | */15 07-23h | (PHP actualize) |
 | freshrss-digest | Mon 08:00 | freshrss-digest.sh |
+| freshrss-autoupdate | 09:00 daily | freshrss-autoupdate.sh |
 | freshrss-yt-favicons | 1st 05:00 | freshrss-yt-favicons.sh |
 | rss-bridge-cache-cleanup | 04:00 daily | rss-bridge-cache-cleanup.sh |
 | wifi-watchdog | Every 2 min | wifi-watchdog.sh |

@@ -1,7 +1,7 @@
 # dotfiles — Claude Code instructions
 
 Cross-platform dotfiles managed by chezmoi (user configs) and Ansible (server infra).
-Currently: macOS + Raspberry Pi. Planned: Proxmox, Arch Linux, Windows.
+Currently: macOS + Raspberry Pi + Proxmox + Arch Linux (arch-server). Planned: Windows.
 
 ## Architecture
 
