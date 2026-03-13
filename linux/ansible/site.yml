@@ -23,6 +23,7 @@
       - rss-bridge-cache-cleanup.timer
       - freshrss-yt-favicons.timer
       - freshrss-autoupdate.timer
+      - monthly-review.timer
 
   pre_tasks:
     - name: Create autoupdate state directory
