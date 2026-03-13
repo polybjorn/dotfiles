@@ -52,3 +52,41 @@
     - { role: configs, tags: [configs] }
     - { role: dashboard, tags: [dashboard] }
     - { role: sudoers, tags: [sudoers] }
+
+- name: Arch-server infrastructure
+  hosts: arch
+  become: true
+
+  vars_files:
+    - vars/private.yml
+
+  vars:
+    dotfiles_dir: /home/admin/repositories/dotfiles
+    user_name: admin
+    user_home: /home/admin
+
+    timers:
+      - backup-arch.timer
+      - pkg-maintenance.timer
+
+  pre_tasks:
+    - name: Create backup directories
+      file:
+        path: "{{ item }}"
+        state: directory
+        owner: "{{ user_name }}"
+        group: "{{ user_name }}"
+      loop:
+        - "{{ user_home }}/backups"
+        - "{{ user_home }}/Vault/Backups"
+
+    - name: Deploy sudoers for postgres backup
+      copy:
+        content: "admin ALL=(postgres) NOPASSWD: /usr/bin/pg_dumpall\n"
+        dest: /etc/sudoers.d/020_arch-backup
+        mode: "0440"
+        validate: visudo -cf %s
+
+  roles:
+    - { role: scripts, tags: [scripts] }
+    - { role: systemd, tags: [systemd] }
