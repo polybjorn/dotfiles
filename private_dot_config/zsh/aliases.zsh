@@ -29,9 +29,18 @@ if [[ "$OSTYPE" == darwin* ]]; then
   alias bat-themes='bat --list-themes | fzf --preview="bat --theme={} --color=always ${ZDOTDIR}/.zshrc"'
   alias fd='fd --hidden --follow'
 else
-  alias cat='batcat --paging=never'
-  alias batp='batcat'
-  alias fd='fdfind --hidden --follow'
+  if command -v batcat &>/dev/null; then
+    alias cat='batcat --paging=never'
+    alias batp='batcat'
+  elif command -v bat &>/dev/null; then
+    alias cat='bat --paging=never'
+    alias batp='bat'
+  fi
+  if command -v fdfind &>/dev/null; then
+    alias fd='fdfind --hidden --follow'
+  elif command -v fd &>/dev/null; then
+    alias fd='fd --hidden --follow'
+  fi
 fi
 alias ccat='/bin/cat'
 alias ffd='/usr/bin/find'
@@ -64,21 +73,21 @@ else
   alias memuse='free -h'
   alias cpuuse='ps aux --sort=-%cpu | head -n 10'
   alias localip="ip -4 addr show | grep inet | grep -v '127.0.0.1' | awk '{print \$2}'"
-  alias temp='vcgencmd measure_temp'
-  alias throttle='vcgencmd get_throttled'
+  command -v vcgencmd &>/dev/null && alias temp='vcgencmd measure_temp'
+  command -v vcgencmd &>/dev/null && alias throttle='vcgencmd get_throttled'
 fi
 
-# ── SSH (mac only) ───────────────────────────────────────
+# ── chezmoi ────────────────────────────────────────────
+alias cm='chezmoi'
+alias cma='chezmoi apply'
+alias cmd='chezmoi diff'
+alias cme='chezmoi edit'
+alias cms='chezmoi status'
+
+# ── SSH + Ansible (mac only) ──────────────────────────
 if [[ "$OSTYPE" == darwin* ]]; then
   alias pi='ssh admin@${PI_HOST:-pi-server}'
   alias deploy='cd ~/repositories/polybjorn-en && git add . && git commit -m "Update" && git push origin main'
-
-  # ── chezmoi + Ansible ──────────────────────────────────
-  alias cm='chezmoi'
-  alias cma='chezmoi apply'
-  alias cmd='chezmoi diff'
-  alias cme='chezmoi edit'
-  alias cms='chezmoi status'
   alias ans='cd ~/repositories/dotfiles/linux/ansible && ansible-playbook site.yml'
   alias anst='cd ~/repositories/dotfiles/linux/ansible && ansible-playbook site.yml --tags'
   alias ansc='cd ~/repositories/dotfiles/linux/ansible && ansible-playbook site.yml --check'
