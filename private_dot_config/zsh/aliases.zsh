@@ -67,7 +67,11 @@ if [[ "$OSTYPE" == darwin* ]]; then
   alias wifi='networksetup -getairportnetwork en0'
   alias localip='ipconfig getifaddr en0'
 else
-  alias update='sudo apt update && sudo apt upgrade -y && sudo apt autoremove -y'
+  if command -v pacman &>/dev/null; then
+    alias update='sudo pacman -Syu'
+  elif command -v apt &>/dev/null; then
+    alias update='sudo apt update && sudo apt upgrade -y && sudo apt autoremove -y'
+  fi
   alias ports='ss -tlnp'
   alias services='systemctl list-units --type=service --state=running'
   alias memuse='free -h'
