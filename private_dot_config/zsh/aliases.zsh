@@ -6,12 +6,14 @@ alias ..='cd ..'
 alias ...='cd ../..'
 alias ....='cd ../../..'
 alias cd='z'
-alias ls='eza --icons --group-directories-first'
-alias l='eza -la --icons --group-directories-first --git'
-alias ll='eza -lah --icons --group-directories-first --git'
-alias la='eza -A --icons --group-directories-first'
-alias lt='eza --tree --icons --level=2'
-alias ltt='eza --tree --icons --level=3'
+if command -v eza &>/dev/null; then
+  alias ls='eza --icons --group-directories-first'
+  alias l='eza -la --icons --group-directories-first --git'
+  alias ll='eza -lah --icons --group-directories-first --git'
+  alias la='eza -A --icons --group-directories-first'
+  alias lt='eza --tree --icons --level=2'
+  alias ltt='eza --tree --icons --level=3'
+fi
 
 # ── Docker (~/docker/docker-compose.yml) ─────────────────
 alias dpull='docker compose -f ~/docker/docker-compose.yml pull'
