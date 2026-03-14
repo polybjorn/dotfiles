@@ -1,0 +1,6 @@
+[Unit]
+Description=Proxmox config backup
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/backup-proxmox.sh

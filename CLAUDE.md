@@ -1,5 +1,6 @@
 # dotfiles
 
+HEAD
 Cross-platform dotfiles repo for macOS and Linux (Raspberry Pi, Proxmox, arch-server).
 Managed by **chezmoi** (user configs) and **Ansible** (server infra).
 
@@ -31,7 +32,7 @@ dotfiles/                              # chezmoi source directory
 │   ├── executable_ntfy                # cross-platform
 │   ├── executable_backup-status       # cross-platform
 │   ├── executable_syncthing-status    # cross-platform
-│   ├── executable_pkg-maintenance.sh   # cross-platform (brew/apt)
+│   ├── executable_pkg-maintenance.sh   # cross-platform (brew/pacman/apt)
 │   ├── executable_backup.sh           # macOS only (.chezmoiignore)
 │   ├── executable_health-check.sh     # macOS only
 │   ├── executable_stats-push.sh       # macOS only
@@ -46,7 +47,7 @@ dotfiles/                              # chezmoi source directory
 │   ├── launchd/                       # LaunchAgent plists (copied by run_after)
 │   └── defaults.sh                    # macOS system preferences (opt-in)
 ├── linux/
-│   ├── scripts/                       # Pi server scripts → /usr/local/bin/
+│   ├── scripts/                       # Server scripts → /usr/local/bin/
 │   ├── systemd/                       # systemd units (copies) + overrides/
 │   ├── config/                        # server configs (apt, logrotate, etc.)
 │   ├── ansible/                       # Ansible playbook + roles
@@ -77,14 +78,19 @@ chezmoi replaces symlinks with managed file copies. Templates handle
 platform differences (`.zprofile`, `local.gitconfig`). `run_after_` scripts
 handle LaunchAgents, p10k, and Brewfile.
 
-### Pi server infrastructure (Ansible)
+### Server infrastructure (Ansible)
 
 ```sh
 cd ~/repositories/dotfiles
-ansible-playbook linux/ansible/site.yml
+ansible-playbook linux/ansible/site.yml              # all servers
+ansible-playbook linux/ansible/site.yml --limit pi    # Pi only
+ansible-playbook linux/ansible/site.yml --limit arch  # arch-server only
+ansible-playbook linux/ansible/site.yml --limit proxmox  # Proxmox only
 ```
 
-Runs from Mac over SSH. Manages scripts, systemd, nginx, configs, dashboard, sudoers.
+Runs from Mac over SSH. Pi play: scripts, systemd, nginx, configs, dashboard, sudoers.
+Arch play: scripts, systemd, passwordless sudo, backup dirs.
+Proxmox play: scripts, systemd (runs as root).
 Dry-run: `ansible-playbook linux/ansible/site.yml --check --diff`
 
 ### Legacy fallbacks
@@ -136,6 +142,22 @@ Dry-run: `ansible-playbook linux/ansible/site.yml --check --diff`
 | rss-bridge-cache-cleanup | 04:00 daily | rss-bridge-cache-cleanup.sh |
 | wifi-watchdog | Every 2 min | wifi-watchdog.sh |
 
+## Arch server systemd timers
+
+| Timer | Schedule | Script |
+|---|---|---|
+| backup-arch | 03:00 daily | backup-arch.sh |
+| health-check-arch | Every 4h | health-check-arch.sh |
+| pkg-maintenance | Sun 09:00 | pkg-maintenance.sh (chezmoi) |
+
+## Proxmox systemd timers
+
+| Timer | Schedule | Script |
+|---|---|---|
+| backup-proxmox | 02:00 daily | backup-proxmox.sh |
+| health-check-proxmox | Every 4h | health-check-proxmox.sh |
+| pkg-maintenance | Sun 09:00 | pkg-maintenance.sh (chezmoi) |
+
 ## Key paths
 
 - Repo / chezmoi source: `~/repositories/dotfiles/` (symlinked from `~/.local/share/chezmoi`)
@@ -143,6 +165,6 @@ Dry-run: `ansible-playbook linux/ansible/site.yml --check --diff`
 - Private config: `~/.config/dotfiles/env` (chezmoi, age-encrypted)
 - Platform git overrides: `~/.config/git/local.gitconfig` (chezmoi template)
 - User scripts: `~/.local/bin/` (chezmoi-managed copies)
-- Server scripts: `/usr/local/bin/` (Ansible symlinks, Pi only)
+- Server scripts: `/usr/local/bin/` (Ansible symlinks, Pi + arch-server + Proxmox)
 - ZDOTDIR: `~/.config/zsh/`
 - age key: `~/.config/chezmoi/key.txt`

@@ -1,0 +1,6 @@
+[Unit]
+Description=Monthly review reminder via ntfy
+
+[Service]
+Type=oneshot
+ExecStart=/bin/bash -c 'PREV=$(date -d "last month" +"%%B %%Y"); curl -s -o /dev/null -H "Title: Monthly review" -H "Priority: default" -H "Tags: memo" -d "Write your Review for $PREV in Obsidian" http://localhost:2586/pi-alerts'

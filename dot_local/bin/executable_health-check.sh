@@ -4,8 +4,10 @@
 [[ -f "$HOME/.config/dotfiles/env" ]] && source "$HOME/.config/dotfiles/env"
 
 NTFY_URL="${NTFY_URL:-https://localhost:2587}/mac-alerts"
-HOST=$(hostname -s)
+HOST=$(scutil --get LocalHostName 2>/dev/null || hostname -s)
 PI_HOST="${PI_HOST:-admin@pi-server}"
+ARCH_HOST="${ARCH_HOST:-arch-server}"
+PROX_HOST="${PROX_HOST:-proxmox}"
 
 alert() {
   local priority="$1" title="$2" tags="$3" body="$4"
@@ -177,5 +179,95 @@ if ssh -o ConnectTimeout=5 -o BatchMode=yes "$PI_HOST" true 2>/dev/null; then
   if [ -n "$PI_STALE" ]; then
     alert "default" "Pi Timer(s) Stale" "hourglass_flowing_sand,warning" \
       "$(echo -e "Timers with no recent trigger on pi-server:\n$PI_STALE")"
+  fi
+fi
+
+# --- Arch server services (via SSH, skip if unreachable) ---
+if ssh -o ConnectTimeout=5 -o BatchMode=yes "$ARCH_HOST" true 2>/dev/null; then
+  ARCH_DOWN=""
+  for svc in postgresql docker tailscaled jellyfin paperless-webserver \
+    navidrome sonarr prowlarr bazarr sabnzbd qbittorrent-nox syncthing@admin; do
+    STATUS=$(ssh "$ARCH_HOST" "systemctl is-active $svc 2>/dev/null" 2>/dev/null)
+    if [ "$STATUS" != "active" ]; then
+      ARCH_DOWN="${ARCH_DOWN}- $svc ($STATUS)\n"
+    fi
+  done
+
+  if [ -n "$ARCH_DOWN" ]; then
+    alert "high" "Arch Service(s) Down" "skull,warning" \
+      "$(echo -e "Dead services on arch-server:\n$ARCH_DOWN")"
+  fi
+
+  # Check key Arch timers
+  ARCH_STALE=""
+  for timer in pkg-maintenance; do
+    LAST=$(ssh "$ARCH_HOST" "systemctl show ${timer}.timer -p LastTriggerUSec --value 2>/dev/null" 2>/dev/null)
+    if [ -z "$LAST" ] || [ "$LAST" = "n/a" ]; then
+      ARCH_STALE="${ARCH_STALE}- ${timer}.timer (never triggered)\n"
+    fi
+  done
+
+  if [ -n "$ARCH_STALE" ]; then
+    alert "default" "Arch Timer(s) Stale" "hourglass_flowing_sand,warning" \
+      "$(echo -e "Timers with no recent trigger on arch-server:\n$ARCH_STALE")"
+  fi
+
+  # Security audit (arch-audit)
+  ARCH_VULNS=$(ssh "$ARCH_HOST" "arch-audit --upgradable 2>/dev/null" 2>/dev/null)
+  if [ -n "$ARCH_VULNS" ]; then
+    VULN_COUNT=$(echo "$ARCH_VULNS" | wc -l | tr -d ' ')
+    alert "high" "Arch Security Updates" "lock,warning" \
+      "$(echo -e "${VULN_COUNT} vulnerable package(s) on arch-server:\n$ARCH_VULNS")"
+  fi
+fi
+
+# --- Proxmox host (via SSH, skip if unreachable) ---
+if ssh -o ConnectTimeout=5 -o BatchMode=yes "$PROX_HOST" true 2>/dev/null; then
+  PROX_DOWN=""
+  for svc in pvedaemon pveproxy pvestatd tailscaled; do
+    STATUS=$(ssh "$PROX_HOST" "systemctl is-active $svc 2>/dev/null" 2>/dev/null)
+    if [ "$STATUS" != "active" ]; then
+      PROX_DOWN="${PROX_DOWN}- $svc ($STATUS)\n"
+    fi
+  done
+
+  if [ -n "$PROX_DOWN" ]; then
+    alert "high" "Proxmox Service(s) Down" "skull,warning" \
+      "$(echo -e "Dead services on proxmox:\n$PROX_DOWN")"
+  fi
+
+  # LXC container status
+  PROX_CT_DOWN=""
+  for ct in 100 102 103; do
+    CT_STATUS=$(ssh "$PROX_HOST" "pct status $ct 2>/dev/null | awk '{print \$2}'" 2>/dev/null)
+    if [ -n "$CT_STATUS" ] && [ "$CT_STATUS" != "running" ]; then
+      PROX_CT_DOWN="${PROX_CT_DOWN}- CT $ct ($CT_STATUS)\n"
+    fi
+  done
+
+  if [ -n "$PROX_CT_DOWN" ]; then
+    alert "high" "Proxmox LXC Down" "package,warning" \
+      "$(echo -e "Stopped containers on proxmox:\n$PROX_CT_DOWN")"
+  fi
+
+  # ZFS pool health
+  POOL_STATE=$(ssh "$PROX_HOST" "zpool status tank 2>/dev/null | awk '/state:/{print \$2}'" 2>/dev/null)
+  if [ -n "$POOL_STATE" ] && [ "$POOL_STATE" != "ONLINE" ]; then
+    alert "urgent" "ZFS Pool Degraded" "warning,rotating_light" \
+      "ZFS pool 'tank' is $POOL_STATE on proxmox"
+  fi
+
+  # Check key Proxmox timers
+  PROX_STALE=""
+  for timer in health-check-proxmox backup-proxmox; do
+    LAST=$(ssh "$PROX_HOST" "systemctl show ${timer}.timer -p LastTriggerUSec --value 2>/dev/null" 2>/dev/null)
+    if [ -z "$LAST" ] || [ "$LAST" = "n/a" ]; then
+      PROX_STALE="${PROX_STALE}- ${timer}.timer (never triggered)\n"
+    fi
+  done
+
+  if [ -n "$PROX_STALE" ]; then
+    alert "default" "Proxmox Timer(s) Stale" "hourglass_flowing_sand,warning" \
+      "$(echo -e "Timers with no recent trigger on proxmox:\n$PROX_STALE")"
   fi
 fi

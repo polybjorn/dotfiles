@@ -20,6 +20,7 @@ Currently: macOS + Raspberry Pi + Proxmox + Arch Linux (arch-server). Planned: W
 
 ## Conventions
 
+- **Always `git pull` before making changes** — repo is edited from multiple devices
 - chezmoi prefix conventions: `dot_`, `private_dot_`, `executable_`, `create_`, `run_after_`, `.tmpl`
 - LaunchAgent plists and systemd units are COPIED, not symlinked (both systems delete symlinks)
 - Platform branching: `{{ if eq .chezmoi.os "darwin" }}` in templates, `$OSTYPE` in scripts

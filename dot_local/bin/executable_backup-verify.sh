@@ -1,12 +1,12 @@
 #!/bin/bash
 # Backup verification — Mac tarball, Pi tarball (via Syncthing), KeePassXC, database integrity
-# Runs after backup (03:30), alerts via ntfy on failure only
+# Runs after backup (09:05), alerts via ntfy on failure only
 
 set -euo pipefail
 
 [[ -f "$HOME/.config/dotfiles/env" ]] && source "$HOME/.config/dotfiles/env"
 
-HOST=$(hostname -s)
+HOST=$(scutil --get LocalHostName 2>/dev/null || hostname -s)
 BACKUP_DIR="$HOME/Vault/Backups/$HOST"
 NTFY_URL="${NTFY_URL:-https://localhost:2587}/mac-alerts"
 VERIFY_TMP=$(mktemp -d)
@@ -21,7 +21,7 @@ alert_failure() {
     -H "Title: Backup Verification Error" \
     -H "Priority: high" \
     -H "Tags: rotating_light,warning" \
-    -d "$(echo -e "From: backup-verify (daily 03:30)\n\nVerification script failed on $HOST: ${1:-unknown error}")" \
+    -d "$(echo -e "From: backup-verify (daily 09:05)\n\nVerification script failed on $HOST: ${1:-unknown error}")" \
     "$NTFY_URL" || true
 }
 trap 'alert_failure "unexpected error on line $LINENO"' ERR
@@ -197,7 +197,7 @@ if [ -n "$PROBLEMS" ]; then
     -H "Title: Backup Verification Failed" \
     -H "Priority: high" \
     -H "Tags: rotating_light,warning" \
-    -d "$(echo -e "From: backup-verify (daily 03:30)\n\nVerification issues on $HOST:\n$PROBLEMS")" \
+    -d "$(echo -e "From: backup-verify (daily 09:05)\n\nVerification issues on $HOST:\n$PROBLEMS")" \
     "$NTFY_URL" || true
 else
   echo "All checks passed."

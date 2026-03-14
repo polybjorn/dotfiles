@@ -34,16 +34,16 @@ cp linux/ansible/vars/private.yml.example linux/ansible/vars/private.yml
 cd linux/ansible && ansible-playbook site.yml
 ```
 
-Ansible runs from `linux/ansible/` (where `ansible.cfg` and `inventory.ini` live).
-Output only shows changed/failed tasks. Use `--tags` for targeted deploys:
+Ansible manages Pi and arch-server from Mac over SSH. Two plays in `site.yml`:
+- **Pi**: scripts, systemd, nginx, configs, dashboard, sudoers, sshd
+- **Arch-server**: scripts, systemd, passwordless sudo, backup dirs
 
 ```sh
-ansible-playbook site.yml --tags configs    # only deploy configs
+ansible-playbook site.yml --limit pi        # Pi only
+ansible-playbook site.yml --limit arch      # arch-server only
 ansible-playbook site.yml --tags systemd    # only deploy timers/services
 ansible-playbook site.yml --check           # dry-run, no changes
 ```
-
-Available tags: `sshd`, `scripts`, `systemd`, `nginx`, `configs`, `dashboard`, `sudoers`
 
 ## Architecture
 
@@ -68,12 +68,11 @@ Secrets are separated: chezmoi uses age encryption, Ansible uses a gitignored va
 ### Shared (all platforms)
 - Zsh with Powerlevel10k, ZDOTDIR at `~/.config/zsh/`
 - Cross-platform aliases with `$OSTYPE` branching
+- SSH aliases: `pi`, `arch`, `prox`, `mac` (hop between machines from anywhere)
 - Cross-platform scripts: pkg-maintenance, ntfy, backup-status, syncthing-status
 - XDG Base Directory layout
 - SSH config with key pinning, multiplexing (ControlMaster), keepalive
 - Global git pre-commit hook: gitleaks secret scan + PII pattern scan
-  - PII patterns file templated per-machine via chezmoi
-  - Health-check validates hook is deployed
 
 ### macOS
 - Hammerspoon window management (MiroWindowsManager)
@@ -82,13 +81,19 @@ Secrets are separated: chezmoi uses age encryption, Ansible uses a gitignored va
 - macOS system defaults (opt-in) - includes firewall + stealth mode
 - Photo sorting
 
-### Server infrastructure (Ansible-managed)
+### Pi server (Ansible-managed)
 - sshd hardening (key-only auth, no root login, AllowUsers)
 - Server scripts (backup, health check, FreshRSS, nightmode, etc.)
 - Systemd services and timers
-- Nginx reverse proxy configs (Ansible Jinja2 templates)
+- Nginx reverse proxy configs (Jinja2 templates)
 - Server configs (ntfy, cloudflared, unattended-upgrades, radicale, etc.)
 - Dashboard stats API
+
+### Arch-server (Ansible-managed)
+- Server scripts (backup, pkg-maintenance)
+- Systemd services and timers
+- Passwordless sudo for admin
+- Postgres, Sonarr, Prowlarr, Bazarr, Navidrome, Paperless, SABnzbd, Jellyfin, Samba
 
 ## Scheduled tasks
 
@@ -108,7 +113,7 @@ Secrets are separated: chezmoi uses age encryption, Ansible uses a gitignored va
 | vault-maintenance-weekly | Mon 09:30 | Orphan fixer + broken link check |
 | vault-maintenance-monthly | 1st 09:45 | Frontmatter audit + tag scan |
 
-### Linux (systemd timers)
+### Pi (systemd timers)
 
 | Timer | Schedule | Purpose |
 |---|---|---|
@@ -122,6 +127,22 @@ Secrets are separated: chezmoi uses age encryption, Ansible uses a gitignored va
 | freshrss-yt-favicons | 1st 05:00 | YouTube favicon refresh |
 | rss-bridge-cache-cleanup | 04:00 daily | RSS-Bridge cache cleanup |
 | wifi-watchdog | Every 2 min | WiFi reconnection |
+
+### Arch-server (systemd timers)
+
+| Timer | Schedule | Purpose |
+|---|---|---|
+| backup-arch | 03:00 daily | Postgres, configs, app data backup |
+| health-check-arch | Every 4h | System diagnostics, ntfy alerts |
+| pkg-maintenance | Sun 09:00 | Package update/cleanup |
+
+### Proxmox (systemd timers)
+
+| Timer | Schedule | Purpose |
+|---|---|---|
+| backup-proxmox | 02:00 daily | Host configs + ZFS metadata backup |
+| health-check-proxmox | Every 4h | System diagnostics, ntfy alerts |
+| pkg-maintenance | Sun 09:00 | Package update/cleanup |
 
 ## Repo structure
 

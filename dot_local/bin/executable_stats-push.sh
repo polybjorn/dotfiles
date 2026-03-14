@@ -6,7 +6,7 @@
 PI_HOST="${PI_HOST:-admin@pi-server}"
 PI_PATH="/var/www/pi-dashboard/mac-stats.json"
 TMP="/tmp/mac-stats.json"
-HOST=$(hostname -s)
+HOST=$(scutil --get LocalHostName 2>/dev/null || hostname -s)
 
 # --- Disk (full APFS container, reported as marketed 512 GB) ---
 DISK_USED_B=$(diskutil apfs list 2>/dev/null | awk '/Capacity In Use By Volumes/{for(i=1;i<=NF;i++) if($i~/^[0-9]+$/ && $(i+1)=="B") {print $i; exit}}')

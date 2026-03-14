@@ -23,6 +23,7 @@
       - rss-bridge-cache-cleanup.timer
       - freshrss-yt-favicons.timer
       - freshrss-autoupdate.timer
+      - monthly-review.timer
 
   pre_tasks:
     - name: Create autoupdate state directory
@@ -51,3 +52,68 @@
     - { role: configs, tags: [configs] }
     - { role: dashboard, tags: [dashboard] }
     - { role: sudoers, tags: [sudoers] }
+
+- name: Arch-server infrastructure
+  hosts: arch
+  become: true
+
+  vars_files:
+    - vars/private.yml
+
+  vars:
+    dotfiles_dir: /home/admin/repositories/dotfiles
+    user_name: admin
+    user_home: /home/admin
+
+    timers:
+      - backup-arch.timer
+      - health-check-arch.timer
+      - pkg-maintenance.timer
+
+  pre_tasks:
+    - name: Create backup directories
+      file:
+        path: "{{ item }}"
+        state: directory
+        owner: "{{ user_name }}"
+        group: "{{ user_name }}"
+      loop:
+        - "{{ user_home }}/backups"
+        - "{{ user_home }}/Vault/Backups"
+
+    - name: Deploy passwordless sudo for admin
+      copy:
+        content: "admin ALL=(ALL) NOPASSWD: ALL\n"
+        dest: /etc/sudoers.d/010_admin-nopasswd
+        mode: "0440"
+        validate: visudo -cf %s
+
+  roles:
+    - { role: scripts, tags: [scripts] }
+    - { role: systemd, tags: [systemd] }
+
+- name: Proxmox host infrastructure
+  hosts: proxmox
+  become: true
+
+  vars:
+    dotfiles_dir: /root/repositories/dotfiles
+    user_name: root
+    user_home: /root
+
+    timers:
+      - backup-proxmox.timer
+      - health-check-proxmox.timer
+      - pkg-maintenance.timer
+
+  pre_tasks:
+    - name: Create backup directory
+      file:
+        path: "{{ user_home }}/backups"
+        state: directory
+        owner: "{{ user_name }}"
+        group: "{{ user_name }}"
+
+  roles:
+    - { role: scripts, tags: [scripts] }
+    - { role: systemd, tags: [systemd] }

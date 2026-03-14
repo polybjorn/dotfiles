@@ -86,6 +86,23 @@ fi
 # ── Zoxide ───────────────────────────────────────────────
 eval "$(zoxide init zsh)"
 
+# ── iTerm2 tab title + color ──────────────────────────────
+# Auto-identify tabs by hostname (colors are iTerm2-specific, title is universal)
+_host_tab_id() {
+  local name="${HOST:-$(hostname -s)}"
+  case "$name" in
+    *macbook*|*Macbook*|*MacBook*) name="macbook" ;;
+  esac
+  printf '\e]0;%s\a' "$name"
+  case "$name" in
+    macbook)     printf '\e]6;1;bg;red;brightness;140\a\e]6;1;bg;green;brightness;100\a\e]6;1;bg;blue;brightness;200\a' ;;
+    pi-server)   printf '\e]6;1;bg;red;brightness;80\a\e]6;1;bg;green;brightness;180\a\e]6;1;bg;blue;brightness;80\a' ;;
+    arch-server) printf '\e]6;1;bg;red;brightness;80\a\e]6;1;bg;green;brightness;120\a\e]6;1;bg;blue;brightness;200\a' ;;
+    proxmox*)    printf '\e]6;1;bg;red;brightness;200\a\e]6;1;bg;green;brightness;120\a\e]6;1;bg;blue;brightness;80\a' ;;
+  esac
+}
+precmd_functions+=(_host_tab_id)
+
 # ── Aliases ──────────────────────────────────────────────
 [[ -f "${ZDOTDIR}/aliases.zsh" ]] && source "${ZDOTDIR}/aliases.zsh"
 

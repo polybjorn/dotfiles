@@ -1,0 +1,6 @@
+[Unit]
+Description=Proxmox health check with ntfy alerts
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/health-check-proxmox.sh

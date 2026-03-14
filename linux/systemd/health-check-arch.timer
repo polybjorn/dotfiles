@@ -1,0 +1,9 @@
+[Unit]
+Description=Health check every 4 hours (arch-server)
+
+[Timer]
+OnCalendar=*-*-* 04,08,12,16,20:00:00
+Persistent=true
+
+[Install]
+WantedBy=timers.target

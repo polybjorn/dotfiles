@@ -1,13 +1,13 @@
 #!/bin/bash
 # Package maintenance — update, upgrade, cleanup
-# Cross-platform: brew on macOS, apt on Linux
+# Cross-platform: brew on macOS, pacman on Arch, apt on Debian
 # Runs weekly via launchd/systemd; sends ntfy summary
 
 set -euo pipefail
 
 [[ -f "$HOME/.config/dotfiles/env" ]] && source "$HOME/.config/dotfiles/env"
 
-HOST=$(hostname -s 2>/dev/null || hostname)
+HOST=$(scutil --get LocalHostName 2>/dev/null || hostname -s)
 LOG=""
 
 if [[ "$OSTYPE" == darwin* ]]; then
@@ -68,6 +68,34 @@ if [[ "$OSTYPE" == darwin* ]]; then
   # --- Re-dump Brewfile ---
   echo "Updating Brewfile..."
   $BREW bundle dump --file="$REPO_BREWFILE" --force --quiet
+
+elif command -v pacman &>/dev/null; then
+  # --- Sync database + upgrade ---
+  echo "Updating pacman database..."
+  pacman -Sy --noconfirm --quiet
+
+  OUTDATED=$(pacman -Qu 2>/dev/null || true)
+  if [ -n "$OUTDATED" ]; then
+    echo "Upgrading packages..."
+    pacman -Su --noconfirm --quiet
+    COUNT=$(echo "$OUTDATED" | wc -l | tr -d ' ')
+    NAMES=$(echo "$OUTDATED" | awk '{print $1}' | tr '\n' ', ' | sed 's/, $//')
+    LOG="${LOG}Upgraded: ${COUNT} package(s)\n${NAMES}\n"
+  fi
+
+  # --- Remove orphans ---
+  ORPHANS=$(pacman -Qdtq 2>/dev/null || true)
+  if [ -n "$ORPHANS" ]; then
+    echo "Removing orphan packages..."
+    pacman -Rns --noconfirm $ORPHANS
+    LOG="${LOG}Removed orphans: $(echo "$ORPHANS" | tr '\n' ', ' | sed 's/, $//')\n"
+  fi
+
+  # --- Clean package cache (keep last 2 versions) ---
+  if command -v paccache &>/dev/null; then
+    echo "Cleaning package cache..."
+    paccache -rk2 --quiet
+  fi
 
 else
   # --- Update package lists ---
