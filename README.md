@@ -136,6 +136,14 @@ Secrets are separated: chezmoi uses age encryption, Ansible uses a gitignored va
 | health-check-arch | Every 4h | System diagnostics, ntfy alerts |
 | pkg-maintenance | Sun 09:00 | Package update/cleanup |
 
+### Proxmox (systemd timers)
+
+| Timer | Schedule | Purpose |
+|---|---|---|
+| backup-proxmox | 02:00 daily | Host configs + ZFS metadata backup |
+| health-check-proxmox | Every 4h | System diagnostics, ntfy alerts |
+| pkg-maintenance | Sun 09:00 | Package update/cleanup |
+
 ## Repo structure
 
 ```

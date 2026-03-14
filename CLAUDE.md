@@ -85,10 +85,12 @@ cd ~/repositories/dotfiles
 ansible-playbook linux/ansible/site.yml              # all servers
 ansible-playbook linux/ansible/site.yml --limit pi    # Pi only
 ansible-playbook linux/ansible/site.yml --limit arch  # arch-server only
+ansible-playbook linux/ansible/site.yml --limit proxmox  # Proxmox only
 ```
 
 Runs from Mac over SSH. Pi play: scripts, systemd, nginx, configs, dashboard, sudoers.
 Arch play: scripts, systemd, passwordless sudo, backup dirs.
+Proxmox play: scripts, systemd (runs as root).
 Dry-run: `ansible-playbook linux/ansible/site.yml --check --diff`
 
 ### Legacy fallbacks
@@ -148,6 +150,14 @@ Dry-run: `ansible-playbook linux/ansible/site.yml --check --diff`
 | health-check-arch | Every 4h | health-check-arch.sh |
 | pkg-maintenance | Sun 09:00 | pkg-maintenance.sh (chezmoi) |
 
+## Proxmox systemd timers
+
+| Timer | Schedule | Script |
+|---|---|---|
+| backup-proxmox | 02:00 daily | backup-proxmox.sh |
+| health-check-proxmox | Every 4h | health-check-proxmox.sh |
+| pkg-maintenance | Sun 09:00 | pkg-maintenance.sh (chezmoi) |
+
 ## Key paths
 
 - Repo / chezmoi source: `~/repositories/dotfiles/` (symlinked from `~/.local/share/chezmoi`)
@@ -155,6 +165,6 @@ Dry-run: `ansible-playbook linux/ansible/site.yml --check --diff`
 - Private config: `~/.config/dotfiles/env` (chezmoi, age-encrypted)
 - Platform git overrides: `~/.config/git/local.gitconfig` (chezmoi template)
 - User scripts: `~/.local/bin/` (chezmoi-managed copies)
-- Server scripts: `/usr/local/bin/` (Ansible symlinks, Pi + arch-server)
+- Server scripts: `/usr/local/bin/` (Ansible symlinks, Pi + arch-server + Proxmox)
 - ZDOTDIR: `~/.config/zsh/`
 - age key: `~/.config/chezmoi/key.txt`

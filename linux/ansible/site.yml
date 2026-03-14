@@ -91,3 +91,29 @@
   roles:
     - { role: scripts, tags: [scripts] }
     - { role: systemd, tags: [systemd] }
+
+- name: Proxmox host infrastructure
+  hosts: proxmox
+  become: true
+
+  vars:
+    dotfiles_dir: /root/repositories/dotfiles
+    user_name: root
+    user_home: /root
+
+    timers:
+      - backup-proxmox.timer
+      - health-check-proxmox.timer
+      - pkg-maintenance.timer
+
+  pre_tasks:
+    - name: Create backup directory
+      file:
+        path: "{{ user_home }}/backups"
+        state: directory
+        owner: "{{ user_name }}"
+        group: "{{ user_name }}"
+
+  roles:
+    - { role: scripts, tags: [scripts] }
+    - { role: systemd, tags: [systemd] }
