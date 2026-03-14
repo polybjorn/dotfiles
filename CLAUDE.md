@@ -145,6 +145,7 @@ Dry-run: `ansible-playbook linux/ansible/site.yml --check --diff`
 | Timer | Schedule | Script |
 |---|---|---|
 | backup-arch | 03:00 daily | backup-arch.sh |
+| health-check-arch | Every 4h | health-check-arch.sh |
 | pkg-maintenance | Sun 09:00 | pkg-maintenance.sh (chezmoi) |
 
 ## Key paths
