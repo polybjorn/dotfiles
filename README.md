@@ -133,6 +133,7 @@ Secrets are separated: chezmoi uses age encryption, Ansible uses a gitignored va
 | Timer | Schedule | Purpose |
 |---|---|---|
 | backup-arch | 03:00 daily | Postgres, configs, app data backup |
+| health-check-arch | Every 4h | System diagnostics, ntfy alerts |
 | pkg-maintenance | Sun 09:00 | Package update/cleanup |
 
 ## Repo structure
