@@ -111,6 +111,17 @@ if [ -d "$AB_DIR" ]; then
   cp -a "$AB_DIR/metadata" "$WORK_DIR/app-data/audiobookshelf/" 2>/dev/null || true
 fi
 
+# Navidrome database (sqlite3 .backup for consistency while service runs)
+ND_DB="/var/lib/navidrome/navidrome.db"
+if [ -f "$ND_DB" ]; then
+  mkdir -p "$WORK_DIR/app-data/navidrome"
+  if command -v sqlite3 >/dev/null 2>&1; then
+    sqlite3 "$ND_DB" ".backup '$WORK_DIR/app-data/navidrome/navidrome.db'"
+  else
+    cp "$ND_DB" "$WORK_DIR/app-data/navidrome/"
+  fi
+fi
+
 # --- Compress ---
 
 echo "Compressing..."
