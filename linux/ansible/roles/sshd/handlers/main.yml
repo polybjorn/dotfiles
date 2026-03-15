@@ -5,7 +5,7 @@
   listen: restart sshd
 
 - name: Restart sshd
-  systemd:
-    name: "{{ 'ssh' if ansible_os_family == 'Debian' else 'sshd' }}"
-    state: restarted
+  shell: "sleep 1 && systemctl restart {{ 'ssh' if ansible_os_family == 'Debian' else 'sshd' }}"
+  async: 10
+  poll: 0
   listen: restart sshd

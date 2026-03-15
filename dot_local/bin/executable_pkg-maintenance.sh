@@ -36,7 +36,7 @@ if [[ "$OSTYPE" == darwin* ]]; then
 
   # --- Update ---
   echo "Updating brew..."
-  $BREW update --quiet
+  $BREW update --quiet || true
 
   # --- Upgrade formulae ---
   OUTDATED_FORMULAE=$($BREW outdated --formula --quiet 2>/dev/null || true)

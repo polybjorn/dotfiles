@@ -11,9 +11,9 @@
   failed_when: gpasswd_result.rc != 0 and "is not a member" not in gpasswd_result.stderr
   when: ansible_distribution == "Debian"
 
-- name: Deploy sudo for admin (password required)
+- name: Deploy sudo for admin (NOPASSWD)
   copy:
-    content: "admin ALL=(ALL) ALL\n"
+    content: "admin ALL=(ALL) NOPASSWD: ALL\n"
     dest: /etc/sudoers.d/010_admin-sudo
     mode: "0440"
     validate: visudo -cf %s

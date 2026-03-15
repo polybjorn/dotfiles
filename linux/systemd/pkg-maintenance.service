@@ -5,4 +5,5 @@ Wants=network-online.target
 
 [Service]
 Type=oneshot
+Environment=HOME=/home/admin
 ExecStart=/home/admin/.local/bin/pkg-maintenance.sh
