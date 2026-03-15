@@ -10,7 +10,7 @@ jobs:
     name: chezmoi dry-run
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Install chezmoi
         run: sh -c "$(curl -fsLS get.chezmoi.io)" -- -b /usr/local/bin
       - name: Validate chezmoi config
@@ -20,7 +20,7 @@ jobs:
     name: Ansible syntax check
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Install Ansible
         run: pip install ansible
       - name: Create dummy private vars
@@ -32,7 +32,7 @@ jobs:
     name: ShellCheck
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Check user scripts
         run: |
           find dot_local/bin -name 'executable_*.sh' -print0 | xargs -0 shellcheck -S warning || true
