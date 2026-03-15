@@ -36,7 +36,7 @@ cd linux/ansible && ansible-playbook site.yml
 
 Ansible manages Pi, arch-server, and Proxmox from Mac over SSH. Three plays in `site.yml`:
 - **Pi**: sshd, scripts, systemd, nginx, configs, dashboard, sudoers, fail2ban, authorized_keys
-- **Arch-server**: sshd, scripts, systemd, fail2ban, authorized_keys (sudo requires password)
+- **Arch-server**: sshd, scripts, systemd, fail2ban, authorized_keys, sudoers (NOPASSWD)
 - **Proxmox**: sshd, scripts, systemd, authorized_keys (runs as root)
 
 ```sh
@@ -96,7 +96,7 @@ Secrets are separated: chezmoi uses age encryption, Ansible uses a gitignored va
 - sshd hardening (key-only auth, no root login, AllowUsers)
 - fail2ban intrusion detection (SSH jail)
 - Per-host SSH key management (authorized_keys)
-- Password-required sudo for admin
+- NOPASSWD sudo for admin
 - Server scripts (backup, pkg-maintenance)
 - Systemd services and timers
 - Postgres, Sonarr, Prowlarr, Bazarr, Navidrome, Paperless, SABnzbd, Jellyfin, Samba
@@ -115,7 +115,7 @@ Secrets are separated: chezmoi uses age encryption, Ansible uses a gitignored va
 |---|---|---|
 | backup-claude | On file change | CLAUDE.md backup to Vault |
 | backup | 09:00 daily | Config tarball to Vault |
-| backup-verify | 09:05 daily | Verify backup freshness |
+| backup-verify | 09:15 daily | Verify backup freshness |
 | health-check | 09:10 daily | System diagnostics, ntfy alerts |
 | stats-push | Every 5 min | Push stats to Pi dashboard |
 | pkg-maintenance | Sun 10:00 | Package update/cleanup |

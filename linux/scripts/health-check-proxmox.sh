@@ -92,7 +92,7 @@ fi
 
 # --- LXC containers ---
 LXC_DOWN=""
-for ct in 100 102 103; do
+for ct in 102; do
   if command -v pct >/dev/null 2>&1; then
     STATUS=$(pct status "$ct" 2>/dev/null | awk '{print $2}')
     if [ -n "$STATUS" ] && [ "$STATUS" != "running" ]; then

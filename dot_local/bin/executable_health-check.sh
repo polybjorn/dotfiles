@@ -15,7 +15,7 @@ alert() {
     -H "Title: $title" \
     -H "Priority: $priority" \
     -H "Tags: $tags" \
-    -d "$(echo -e "From: health-check (daily 08:00)\n\n$body")" \
+    -d "$(echo -e "From: health-check (daily 09:10)\n\n$body")" \
     "$NTFY_URL"
 }
 
@@ -185,10 +185,26 @@ fi
 # --- Arch server services (via SSH, skip if unreachable) ---
 if ssh -o ConnectTimeout=5 -o BatchMode=yes "$ARCH_HOST" true 2>/dev/null; then
   ARCH_DOWN=""
+  SCHEDULE=$(ssh "$ARCH_HOST" "cat /etc/service-schedule.conf 2>/dev/null" 2>/dev/null)
+  CURRENT_HOUR=$(date +%H)
   for svc in postgresql docker tailscaled jellyfin paperless-webserver \
     navidrome sonarr prowlarr bazarr sabnzbd qbittorrent-nox syncthing@admin; do
     STATUS=$(ssh "$ARCH_HOST" "systemctl is-active $svc 2>/dev/null" 2>/dev/null)
     if [ "$STATUS" != "active" ]; then
+      # Skip if service-scheduler has it off right now
+      SCHED_LINE=$(echo "$SCHEDULE" | grep "^${svc} " || true)
+      if [ -n "$SCHED_LINE" ]; then
+        START_H=$(echo "$SCHED_LINE" | awk '{print $3}' | cut -d: -f1 | sed 's/^0//')
+        STOP_H=$(echo "$SCHED_LINE" | awk '{print $4}' | cut -d: -f1 | sed 's/^0//')
+        H=$((10#$CURRENT_HOUR))
+        if [ "$START_H" -le "$STOP_H" ]; then
+          # Normal range (e.g. 07:00-02:00 doesn't apply here)
+          [ "$H" -lt "$START_H" ] || [ "$H" -ge "$STOP_H" ] && continue
+        else
+          # Overnight range (e.g. 02:00-07:00): active when H >= START or H < STOP
+          [ "$H" -lt "$START_H" ] && [ "$H" -ge "$STOP_H" ] && continue
+        fi
+      fi
       ARCH_DOWN="${ARCH_DOWN}- $svc ($STATUS)\n"
     fi
   done
@@ -238,7 +254,7 @@ if ssh -o ConnectTimeout=5 -o BatchMode=yes "$PROX_HOST" true 2>/dev/null; then
 
   # LXC container status
   PROX_CT_DOWN=""
-  for ct in 100 102 103; do
+  for ct in 102; do
     CT_STATUS=$(ssh "$PROX_HOST" "pct status $ct 2>/dev/null | awk '{print \$2}'" 2>/dev/null)
     if [ -n "$CT_STATUS" ] && [ "$CT_STATUS" != "running" ]; then
       PROX_CT_DOWN="${PROX_CT_DOWN}- CT $ct ($CT_STATUS)\n"
