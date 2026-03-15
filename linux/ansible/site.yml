@@ -80,8 +80,14 @@
       - backup-arch.timer
       - health-check-arch.timer
       - pkg-maintenance.timer
+      - tailscale-certrenew.timer
 
   pre_tasks:
+    - name: Set tailscale hostname for arch
+      set_fact:
+        tailscale_hostname: "{{ tailscale_hostname_arch }}"
+      tags: [nginx]
+
     - name: Create backup directories
       file:
         path: "{{ item }}"
@@ -108,6 +114,7 @@
     - { role: sshd, tags: [sshd] }
     - { role: scripts, tags: [scripts] }
     - { role: systemd, tags: [systemd] }
+    - { role: nginx, tags: [nginx] }
     - { role: fail2ban, tags: [fail2ban] }
     - { role: authorized_keys, tags: [authorized_keys] }
 
