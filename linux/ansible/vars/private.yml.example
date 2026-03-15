@@ -3,5 +3,6 @@
 # private.yml is gitignored — never commit it.
 
 tailscale_hostname: pi-server.TAILNET.ts.net
+tailscale_hostname_arch: arch-server.TAILNET.ts.net
 syncthing_api_key: YOUR_SYNCTHING_API_KEY
 cloudflare_tunnel_id: YOUR_TUNNEL_UUID

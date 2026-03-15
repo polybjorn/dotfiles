@@ -71,6 +71,7 @@
     dotfiles_dir: /home/admin/repositories/dotfiles
     user_name: admin
     user_home: /home/admin
+    tailscale_hostname: "{{ tailscale_hostname_arch }}"
 
     authorized_ssh_keys:
       - "{{ ssh_pubkeys.mac }}"
@@ -108,6 +109,7 @@
     - { role: sshd, tags: [sshd] }
     - { role: scripts, tags: [scripts] }
     - { role: systemd, tags: [systemd] }
+    - { role: nginx, tags: [nginx] }
     - { role: fail2ban, tags: [fail2ban] }
     - { role: authorized_keys, tags: [authorized_keys] }
 

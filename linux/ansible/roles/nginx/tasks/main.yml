@@ -1,8 +1,35 @@
 ---
+- name: Create nginx site directories (Arch)
+  file:
+    path: "{{ item }}"
+    state: directory
+  loop:
+    - /etc/nginx/sites-available
+    - /etc/nginx/sites-enabled
+  when: ansible_os_family == "Archlinux"
+
+- name: Deploy nginx.conf (Arch)
+  template:
+    src: nginx.conf.j2
+    dest: /etc/nginx/nginx.conf
+    backup: true
+  when: ansible_os_family == "Archlinux"
+  notify: reload-nginx
+
 - name: Deploy nginx site configs from templates
   template:
     src: "{{ item }}"
     dest: "/etc/nginx/sites-available/{{ item | basename | regex_replace('\\.j2$', '') }}"
   with_fileglob:
-    - "templates/*.j2"
+    - "templates/{{ group_names[0] }}/*.j2"
+  notify: reload-nginx
+
+- name: Enable nginx sites (Arch)
+  file:
+    src: "/etc/nginx/sites-available/{{ item | basename | regex_replace('\\.j2$', '') }}"
+    dest: "/etc/nginx/sites-enabled/{{ item | basename | regex_replace('\\.j2$', '') }}"
+    state: link
+  with_fileglob:
+    - "templates/{{ group_names[0] }}/*.j2"
+  when: ansible_os_family == "Archlinux"
   notify: reload-nginx
