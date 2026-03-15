@@ -66,13 +66,6 @@
       "description": "Clean stale cache files",
       "icon": "/icons/rss-bridge.png",
       "schedule": "04:00"
-    },
-    {
-      "id": "monthly-review",
-      "name": "Monthly review",
-      "description": "Reminder to write Obsidian review",
-      "icon": "/icons/pi.svg",
-      "schedule": "1st 09:00"
     }
   ]
 }
