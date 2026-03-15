@@ -1,0 +1,6 @@
+[Unit]
+Description=Renew Tailscale HTTPS certificates
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/tailscale-certrenew.sh

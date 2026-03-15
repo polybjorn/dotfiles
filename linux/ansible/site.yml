@@ -80,6 +80,7 @@
       - backup-arch.timer
       - health-check-arch.timer
       - pkg-maintenance.timer
+      - tailscale-certrenew.timer
 
   pre_tasks:
     - name: Set tailscale hostname for arch
