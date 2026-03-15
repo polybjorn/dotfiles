@@ -16,7 +16,8 @@ Currently: macOS + Raspberry Pi + Proxmox + Arch Linux (arch-server). Planned: W
 - `linux/ansible/site.yml` — main Ansible playbook
 - `linux/ansible/inventory.ini` — Ansible host inventory
 - `linux/ansible/vars/private.yml` — secrets (gitignored, copy from `.example`)
-- `linux/ansible/roles/` — scripts, systemd, nginx, configs, dashboard, sudoers
+- `linux/ansible/vars/ssh_keys.yml` — SSH public keys per host (not secret)
+- `linux/ansible/roles/` — sshd, scripts, systemd, nginx, configs, dashboard, sudoers, fail2ban, authorized_keys
 
 ## Conventions
 

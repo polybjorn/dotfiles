@@ -58,7 +58,7 @@ fi
 
 # --- Key services (always-on infra only, not scheduled services) ---
 DEAD_SERVICES=""
-for svc in tailscaled syncthing@admin postgresql samba docker; do
+for svc in tailscaled syncthing@admin postgresql samba docker navidrome; do
   if systemctl is-active --quiet "$svc" 2>/dev/null; then
     :
   elif systemctl list-unit-files "${svc}.service" 2>/dev/null | grep -q "$svc"; then
@@ -83,6 +83,15 @@ fi
 if ! tailscale status >/dev/null 2>&1; then
   alert "high" "Network Issue" "globe_with_meridians,warning" \
     "Tailscale not running on $HOST"
+fi
+
+# --- Failed SSH logins (last 4h) ---
+FAILED_LOGINS=$(journalctl _SYSTEMD_UNIT=sshd.service _SYSTEMD_UNIT=ssh.service \
+  --since "4 hours ago" --no-pager -q 2>/dev/null \
+  | grep -c "Failed password\|Invalid user\|authentication failure" || true)
+if [ "${FAILED_LOGINS:-0}" -gt 10 ]; then
+  alert "high" "SSH Login Attempts" "lock,warning" \
+    "$FAILED_LOGINS failed SSH login attempts in last 4h on $HOST"
 fi
 
 # --- Backup freshness ---

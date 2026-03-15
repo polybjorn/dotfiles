@@ -1,0 +1,7 @@
+---
+# Public SSH keys for authorized_keys deployment
+# Per-host keys — each host has its own keypair
+
+ssh_pubkeys:
+  mac: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGiCcwyynRCt4ifUbG5uVNOm6MaKNp/hku7LqsfqESWA mac"
+  proxmox: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOyA9EDKNiUc9vCp68gpDxh+4Wdu3SOYTO5z1gvFIepC proxmox"

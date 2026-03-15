@@ -53,7 +53,11 @@ dotfiles/                              # chezmoi source directory
 │   ├── ansible/                       # Ansible playbook + roles
 │   │   ├── roles/nginx/templates/     # nginx site configs (Jinja2)
 │   │   ├── roles/configs/templates/   # ntfy + cloudflared configs (Jinja2)
-│   │   └── vars/private.yml           # secrets (gitignored)
+│   │   ├── roles/sshd/               # SSH server hardening (all hosts)
+│   │   ├── roles/fail2ban/            # intrusion detection (Pi + arch)
+│   │   ├── roles/authorized_keys/     # per-host SSH key management
+│   │   ├── vars/private.yml           # secrets (gitignored)
+│   │   └── vars/ssh_keys.yml          # SSH public keys per host
 │   └── install.sh                     # legacy fallback (no-dependency)
 ├── Brewfile                           # Homebrew packages
 ├── bootstrap.sh                       # legacy fallback (pre-chezmoi)
@@ -88,9 +92,10 @@ ansible-playbook linux/ansible/site.yml --limit arch  # arch-server only
 ansible-playbook linux/ansible/site.yml --limit proxmox  # Proxmox only
 ```
 
-Runs from Mac over SSH. Pi play: scripts, systemd, nginx, configs, dashboard, sudoers.
-Arch play: scripts, systemd, passwordless sudo, backup dirs.
-Proxmox play: scripts, systemd (runs as root).
+Runs from Mac over SSH. Pi and arch-server require `--ask-become-pass` (password-based sudo).
+Pi play: sshd, scripts, systemd, nginx, configs, dashboard, sudoers, fail2ban, authorized_keys.
+Arch play: sshd, scripts, systemd, fail2ban, authorized_keys, sudo (password required).
+Proxmox play: sshd, scripts, systemd, authorized_keys (runs as root).
 Dry-run: `ansible-playbook linux/ansible/site.yml --check --diff`
 
 ### Legacy fallbacks

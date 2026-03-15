@@ -34,9 +34,10 @@ cp linux/ansible/vars/private.yml.example linux/ansible/vars/private.yml
 cd linux/ansible && ansible-playbook site.yml
 ```
 
-Ansible manages Pi and arch-server from Mac over SSH. Two plays in `site.yml`:
-- **Pi**: scripts, systemd, nginx, configs, dashboard, sudoers, sshd
-- **Arch-server**: scripts, systemd, passwordless sudo, backup dirs
+Ansible manages Pi, arch-server, and Proxmox from Mac over SSH. Three plays in `site.yml`:
+- **Pi**: sshd, scripts, systemd, nginx, configs, dashboard, sudoers, fail2ban, authorized_keys
+- **Arch-server**: sshd, scripts, systemd, fail2ban, authorized_keys (sudo requires password)
+- **Proxmox**: sshd, scripts, systemd, authorized_keys (runs as root)
 
 ```sh
 ansible-playbook site.yml --limit pi        # Pi only
@@ -83,6 +84,8 @@ Secrets are separated: chezmoi uses age encryption, Ansible uses a gitignored va
 
 ### Pi server (Ansible-managed)
 - sshd hardening (key-only auth, no root login, AllowUsers)
+- fail2ban intrusion detection (SSH + nginx jails)
+- Per-host SSH key management (authorized_keys)
 - Server scripts (backup, health check, FreshRSS, nightmode, etc.)
 - Systemd services and timers
 - Nginx reverse proxy configs (Jinja2 templates)
@@ -90,10 +93,19 @@ Secrets are separated: chezmoi uses age encryption, Ansible uses a gitignored va
 - Dashboard stats API
 
 ### Arch-server (Ansible-managed)
+- sshd hardening (key-only auth, no root login, AllowUsers)
+- fail2ban intrusion detection (SSH jail)
+- Per-host SSH key management (authorized_keys)
+- Password-required sudo for admin
 - Server scripts (backup, pkg-maintenance)
 - Systemd services and timers
-- Passwordless sudo for admin
 - Postgres, Sonarr, Prowlarr, Bazarr, Navidrome, Paperless, SABnzbd, Jellyfin, Samba
+
+### Proxmox (Ansible-managed)
+- sshd hardening (key-only auth, root via key only, AllowUsers)
+- Per-host SSH key management (authorized_keys)
+- Server scripts (backup, health check, pkg-maintenance)
+- Systemd services and timers
 
 ## Scheduled tasks
 
@@ -178,13 +190,16 @@ dotfiles/                              # chezmoi source directory
 │       │   ├── scripts/               # symlink scripts
 │       │   ├── systemd/               # copy units, enable timers
 │       │   ├── nginx/templates/       # Jinja2 nginx configs
-│       │   ├── sshd/templates/        # sshd_config hardening
+│       │   ├── sshd/templates/        # sshd_config hardening (all hosts)
+│       │   ├── fail2ban/templates/    # fail2ban jails (Pi + arch)
+│       │   ├── authorized_keys/       # per-host SSH key management
 │       │   ├── configs/templates/     # Jinja2 ntfy + cloudflared configs
 │       │   ├── dashboard/             # symlink pi-dashboard
 │       │   └── sudoers/               # timer control permissions
 │       └── vars/
 │           ├── private.yml.example    # template for secrets
-│           └── private.yml            # actual secrets (gitignored)
+│           ├── private.yml            # actual secrets (gitignored)
+│           └── ssh_keys.yml           # SSH public keys per host
 └── Brewfile                           # Homebrew packages
 ```
 
