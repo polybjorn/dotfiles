@@ -1,4 +1,23 @@
 ---
+- name: Remove old passwordless sudo file
+  file:
+    path: /etc/sudoers.d/010_pi-nopasswd
+    state: absent
+
+- name: Remove admin from sudo group (has NOPASSWD on Raspberry Pi OS)
+  command: gpasswd -d admin sudo
+  register: gpasswd_result
+  changed_when: gpasswd_result.rc == 0
+  failed_when: gpasswd_result.rc != 0 and "is not a member" not in gpasswd_result.stderr
+  when: ansible_distribution == "Debian"
+
+- name: Deploy sudo for admin (password required)
+  copy:
+    content: "admin ALL=(ALL) ALL\n"
+    dest: /etc/sudoers.d/010_admin-sudo
+    mode: "0440"
+    validate: visudo -cf %s
+
 - name: Deploy sudoers for timer control
   template:
     src: 020_pi-cron.j2

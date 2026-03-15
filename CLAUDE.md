@@ -92,7 +92,7 @@ ansible-playbook linux/ansible/site.yml --limit arch  # arch-server only
 ansible-playbook linux/ansible/site.yml --limit proxmox  # Proxmox only
 ```
 
-Runs from Mac over SSH. Arch-server requires `--ask-become-pass` (password-based sudo).
+Runs from Mac over SSH. Pi and arch-server require `--ask-become-pass` (password-based sudo).
 Pi play: sshd, scripts, systemd, nginx, configs, dashboard, sudoers, fail2ban, authorized_keys.
 Arch play: sshd, scripts, systemd, fail2ban, authorized_keys, sudo (password required).
 Proxmox play: sshd, scripts, systemd, authorized_keys (runs as root).
