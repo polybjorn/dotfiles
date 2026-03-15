@@ -1,9 +1,11 @@
 # Managed by Ansible — do not edit manually
 
+{% if ansible_os_family == 'Debian' %}
 Include /etc/ssh/sshd_config.d/*.conf
+{% endif %}
 
 # Authentication
-PermitRootLogin no
+PermitRootLogin {{ 'prohibit-password' if user_name == 'root' else 'no' }}
 PubkeyAuthentication yes
 PasswordAuthentication no
 KbdInteractiveAuthentication no
@@ -25,4 +27,4 @@ ClientAliveCountMax 3
 AcceptEnv LANG LC_*
 
 # Subsystems
-Subsystem sftp /usr/lib/openssh/sftp-server
+Subsystem sftp {{ '/usr/lib/openssh/sftp-server' if ansible_os_family == 'Debian' else '/usr/lib/ssh/sftp-server' }}

@@ -5,11 +5,15 @@
 
   vars_files:
     - vars/private.yml
+    - vars/ssh_keys.yml
 
   vars:
     dotfiles_dir: /home/admin/repositories/dotfiles
     user_name: admin
     user_home: /home/admin
+
+    authorized_ssh_keys:
+      - "{{ ssh_pubkeys.mac }}"
 
     timers:
       - backup.timer
@@ -52,6 +56,8 @@
     - { role: configs, tags: [configs] }
     - { role: dashboard, tags: [dashboard] }
     - { role: sudoers, tags: [sudoers] }
+    - { role: fail2ban, tags: [fail2ban] }
+    - { role: authorized_keys, tags: [authorized_keys] }
 
 - name: Arch-server infrastructure
   hosts: arch
@@ -59,11 +65,16 @@
 
   vars_files:
     - vars/private.yml
+    - vars/ssh_keys.yml
 
   vars:
     dotfiles_dir: /home/admin/repositories/dotfiles
     user_name: admin
     user_home: /home/admin
+
+    authorized_ssh_keys:
+      - "{{ ssh_pubkeys.mac }}"
+      - "{{ ssh_pubkeys.proxmox }}"
 
     timers:
       - backup-arch.timer
@@ -81,25 +92,39 @@
         - "{{ user_home }}/backups"
         - "{{ user_home }}/Vault/Backups"
 
-    - name: Deploy passwordless sudo for admin
+    - name: Remove old passwordless sudo file
+      file:
+        path: /etc/sudoers.d/010_admin-nopasswd
+        state: absent
+
+    - name: Deploy sudo for admin (password required)
       copy:
-        content: "admin ALL=(ALL) NOPASSWD: ALL\n"
-        dest: /etc/sudoers.d/010_admin-nopasswd
+        content: "admin ALL=(ALL) ALL\n"
+        dest: /etc/sudoers.d/010_admin-sudo
         mode: "0440"
         validate: visudo -cf %s
 
   roles:
+    - { role: sshd, tags: [sshd] }
     - { role: scripts, tags: [scripts] }
     - { role: systemd, tags: [systemd] }
+    - { role: fail2ban, tags: [fail2ban] }
+    - { role: authorized_keys, tags: [authorized_keys] }
 
 - name: Proxmox host infrastructure
   hosts: proxmox
   become: true
 
+  vars_files:
+    - vars/ssh_keys.yml
+
   vars:
     dotfiles_dir: /root/repositories/dotfiles
     user_name: root
     user_home: /root
+
+    authorized_ssh_keys:
+      - "{{ ssh_pubkeys.mac }}"
 
     timers:
       - backup-proxmox.timer
@@ -115,5 +140,7 @@
         group: "{{ user_name }}"
 
   roles:
+    - { role: sshd, tags: [sshd] }
     - { role: scripts, tags: [scripts] }
     - { role: systemd, tags: [systemd] }
+    - { role: authorized_keys, tags: [authorized_keys] }

@@ -1,0 +1,7 @@
+---
+- name: Deploy authorized_keys
+  authorized_key:
+    user: "{{ user_name }}"
+    key: "{{ authorized_ssh_keys | join('\n') }}"
+    exclusive: true
+    state: present

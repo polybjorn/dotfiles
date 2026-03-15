@@ -1,0 +1,19 @@
+# Managed by Ansible — do not edit manually
+
+[DEFAULT]
+banaction = %(banaction_allports)s
+backend = systemd
+
+[sshd]
+enabled = true
+maxretry = 5
+bantime = 1h
+findtime = 10m
+
+{% if ansible_os_family == 'Debian' %}
+[nginx-http-auth]
+enabled = true
+maxretry = 5
+bantime = 1h
+findtime = 10m
+{% endif %}

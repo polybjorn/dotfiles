@@ -135,6 +135,15 @@ if [ -n "$WIFI_IF" ]; then
   fi
 fi
 
+# --- Failed SSH logins (last 4h) ---
+FAILED_LOGINS=$(journalctl _SYSTEMD_UNIT=sshd.service _SYSTEMD_UNIT=ssh.service \
+  --since "4 hours ago" --no-pager -q 2>/dev/null \
+  | grep -c "Failed password\|Invalid user\|authentication failure" || true)
+if [ "${FAILED_LOGINS:-0}" -gt 10 ]; then
+  alert "high" "SSH Login Attempts" "lock,warning" \
+    "$FAILED_LOGINS failed SSH login attempts in last 4h on $HOST"
+fi
+
 # --- Backup freshness ---
 BACKUP_DIR="$USER_HOME/backups/$HOST"
 HOUR=$(date +%H)
