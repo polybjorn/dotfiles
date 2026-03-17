@@ -20,7 +20,7 @@ if [ -f "$ENV_FILE" ]; then
   # shellcheck source=/dev/null
   source "$ENV_FILE"
 fi
-NTFY_URL="${NTFY_URL:-}"
+NTFY_URL="${NTFY_URL:+$NTFY_URL/proxmox-alerts}"
 
 alert_failure() {
   local msg="$1"

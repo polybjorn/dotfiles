@@ -13,7 +13,7 @@ if [ -f "$ENV_FILE" ]; then
   # shellcheck source=/dev/null
   source "$ENV_FILE"
 fi
-NTFY_URL="${NTFY_URL:-}"
+NTFY_URL="${NTFY_URL:+$NTFY_URL/arch-server-alerts}"
 
 alert() {
   local priority="$1" title="$2" tags="$3" body="$4"
