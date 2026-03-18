@@ -1,0 +1,190 @@
+#!/usr/bin/env python3
+"""qBittorrent seeding cleanup.
+
+Removes torrents that have been seeding for over a threshold
+but haven't reached a minimum ratio.
+
+Default: dry-run mode. Use --execute to actually delete.
+"""
+
+import argparse
+import http.cookiejar
+import json
+import os
+import sys
+import urllib.parse
+import urllib.request
+
+QB_URL = "http://127.0.0.1:8080"
+DEFAULT_MIN_HOURS = 400
+DEFAULT_MIN_RATIO = 0.3
+
+
+def create_opener():
+    cj = http.cookiejar.CookieJar()
+    return urllib.request.build_opener(urllib.request.HTTPCookieProcessor(cj))
+
+
+def login(opener, username, password):
+    data = urllib.parse.urlencode(
+        {"username": username, "password": password}
+    ).encode()
+    req = urllib.request.Request(f"{QB_URL}/api/v2/auth/login", data=data)
+    resp = opener.open(req)
+    body = resp.read().decode()
+    if body.strip() != "Ok.":
+        print(f"Login failed: {body}", file=sys.stderr)
+        sys.exit(1)
+
+
+def get_torrents(opener):
+    """Get all completed torrents (seeding, stalled, paused)."""
+    req = urllib.request.Request(f"{QB_URL}/api/v2/torrents/info")
+    resp = opener.open(req)
+    all_torrents = json.loads(resp.read().decode())
+    # Keep only torrents that have finished downloading
+    return [t for t in all_torrents if t.get("completion_on", 0) > 0]
+
+
+def fmt_size(b):
+    for unit in ("B", "KB", "MB", "GB", "TB"):
+        if abs(b) < 1024:
+            return f"{b:.1f} {unit}"
+        b /= 1024
+    return f"{b:.1f} PB"
+
+
+def fmt_time(seconds):
+    hours = seconds / 3600
+    if hours >= 48:
+        return f"{hours / 24:.0f}d"
+    return f"{hours:.0f}h"
+
+
+def delete_torrents(opener, hashes, delete_files=True):
+    data = urllib.parse.urlencode(
+        {"hashes": "|".join(hashes), "deleteFiles": str(delete_files).lower()}
+    ).encode()
+    req = urllib.request.Request(f"{QB_URL}/api/v2/torrents/delete", data=data)
+    opener.open(req)
+
+
+def main():
+    p = argparse.ArgumentParser(description="Clean up slow-seeding torrents")
+    p.add_argument(
+        "--execute", action="store_true", help="Actually delete (default: dry-run)"
+    )
+    p.add_argument(
+        "--min-hours",
+        type=float,
+        default=DEFAULT_MIN_HOURS,
+        help=f"Min seeding hours before evaluation (default: {DEFAULT_MIN_HOURS})",
+    )
+    p.add_argument(
+        "--min-ratio",
+        type=float,
+        default=DEFAULT_MIN_RATIO,
+        help=f"Ratio threshold — delete if below this after min-hours (default: {DEFAULT_MIN_RATIO})",
+    )
+    p.add_argument(
+        "--username",
+        default=os.environ.get("QB_USERNAME", "admin"),
+        help="qBittorrent username (or QB_USERNAME env)",
+    )
+    p.add_argument(
+        "--password",
+        default=os.environ.get("QB_PASSWORD"),
+        help="qBittorrent password (or QB_PASSWORD env)",
+    )
+    p.add_argument(
+        "--keep-files",
+        action="store_true",
+        help="Remove torrent but keep files on disk",
+    )
+    args = p.parse_args()
+
+    if not args.password:
+        print(
+            "Error: password required. Set QB_PASSWORD env or use --password",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+
+    opener = create_opener()
+    login(opener, args.username, args.password)
+    torrents = get_torrents(opener)
+
+    min_seconds = args.min_hours * 3600
+    to_delete = []
+    to_keep_mature = []  # Past threshold but good ratio
+    to_keep_young = []  # Not yet past threshold
+
+    for t in torrents:
+        seed_time = t.get("seeding_time", 0)
+        ratio = t.get("ratio", 0)
+
+        if seed_time < min_seconds:
+            to_keep_young.append(t)
+        elif ratio >= args.min_ratio:
+            to_keep_mature.append(t)
+        else:
+            to_delete.append(t)
+
+    to_delete.sort(key=lambda t: t.get("ratio", 0))
+
+    mode = "EXECUTE" if args.execute else "DRY RUN"
+    print(f"=== qBittorrent Cleanup ({mode}) ===")
+    print(f"Rule: seeding > {args.min_hours}h AND ratio < {args.min_ratio}")
+    print(
+        f"Total: {len(torrents)} completed torrents "
+        f"({len(to_keep_young)} young, {len(to_keep_mature)} above ratio, "
+        f"{len(to_delete)} to remove)"
+    )
+    print()
+
+    if not to_delete:
+        print("Nothing to delete.")
+        return
+
+    total_size = 0
+    total_uploaded = 0
+    print(
+        f"  {'Name':<55} {'Size':>8} {'Ratio':>6} {'Upped':>8} {'Seeding':>8} {'Category':>10}"
+    )
+    print(f"  {'-' * 101}")
+    for t in to_delete:
+        name = t.get("name", "?")
+        if len(name) > 53:
+            name = name[:50] + "..."
+        size = t.get("size", 0)
+        uploaded = t.get("uploaded", 0)
+        total_size += size
+        total_uploaded += uploaded
+        print(
+            f"  {name:<55} {fmt_size(size):>8} "
+            f"{t.get('ratio', 0):>6.2f} "
+            f"{fmt_size(uploaded):>8} "
+            f"{fmt_time(t.get('seeding_time', 0)):>8} "
+            f"{t.get('category', '-'):>10}"
+        )
+
+    # Also tally the kept torrents for comparison
+    kept_uploaded = sum(t.get("uploaded", 0) for t in to_keep_mature + to_keep_young)
+
+    print(f"  {'-' * 101}")
+    print(f"  {len(to_delete)} torrents, {fmt_size(total_size)} to reclaim")
+    print(f"  Total uploaded by these torrents: {fmt_size(total_uploaded)}")
+    print(f"  Total uploaded by kept torrents:  {fmt_size(kept_uploaded)}")
+
+    if args.execute:
+        delete_files = not args.keep_files
+        action = "Deleting torrents + files" if delete_files else "Removing torrents (keeping files)"
+        print(f"\n{action}...")
+        delete_torrents(opener, [t["hash"] for t in to_delete], delete_files)
+        print("Done.")
+    else:
+        print(f"\nDry run complete. Use --execute to delete.")
+
+
+if __name__ == "__main__":
+    main()
