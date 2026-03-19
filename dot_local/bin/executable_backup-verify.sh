@@ -36,6 +36,20 @@ else
   TARBALL="$BACKUP_DIR/$(date -v-1d +%Y-%m-%d).tar.gz"
 fi
 
+# Wait for backup job if still running (handles sleep catch-up race)
+WAIT_LIMIT=300
+WAITED=0
+while [ $WAITED -lt $WAIT_LIMIT ]; do
+  BACKUP_PID=$(launchctl list 2>/dev/null | awk '$3 == "local.backup" {print $1}')
+  [ "$BACKUP_PID" = "-" ] || [ -z "$BACKUP_PID" ] && break
+  echo "Backup job still running (PID $BACKUP_PID), waiting 30s..."
+  sleep 30
+  WAITED=$((WAITED + 30))
+done
+if [ $WAITED -ge $WAIT_LIMIT ]; then
+  PROBLEMS="${PROBLEMS}- Backup job still running after ${WAIT_LIMIT}s wait\n"
+fi
+
 if [ ! -f "$TARBALL" ]; then
   PROBLEMS="${PROBLEMS}- Tarball not found: $(basename "$TARBALL")\n"
 else

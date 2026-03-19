@@ -1,0 +1,8 @@
+[Unit]
+Description=qBittorrent seeding cleanup
+
+[Service]
+Type=oneshot
+User=admin
+EnvironmentFile=%h/.config/qbt-cleanup.env
+ExecStart=/usr/local/bin/qbt-cleanup --execute

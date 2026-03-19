@@ -192,7 +192,7 @@ if ssh -o ConnectTimeout=5 -o BatchMode=yes "$ARCH_HOST" true 2>/dev/null; then
     STATUS=$(ssh "$ARCH_HOST" "systemctl is-active $svc 2>/dev/null" 2>/dev/null)
     if [ "$STATUS" != "active" ]; then
       # Skip if service-scheduler has it off right now
-      SCHED_LINE=$(echo "$SCHEDULE" | grep "^${svc} " || true)
+      SCHED_LINE=$(echo "$SCHEDULE" | grep -E "^${svc}(\.service)?[[:space:]]" || true)
       if [ -n "$SCHED_LINE" ]; then
         START_H=$(echo "$SCHED_LINE" | awk '{print $3}' | cut -d: -f1 | sed 's/^0//')
         STOP_H=$(echo "$SCHED_LINE" | awk '{print $4}' | cut -d: -f1 | sed 's/^0//')

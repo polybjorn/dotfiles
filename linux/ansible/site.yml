@@ -81,6 +81,7 @@
       - health-check-arch.timer
       - pkg-maintenance.timer
       - tailscale-certrenew.timer
+      - qbt-cleanup.timer
 
   pre_tasks:
     - name: Set tailscale hostname for arch

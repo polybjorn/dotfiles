@@ -29,6 +29,7 @@
     src: "/etc/nginx/sites-available/{{ item | basename | regex_replace('\\.j2$', '') }}"
     dest: "/etc/nginx/sites-enabled/{{ item | basename | regex_replace('\\.j2$', '') }}"
     state: link
+    force: true
   with_fileglob:
     - "templates/{{ group_names[0] }}/*.j2"
   when: ansible_facts['os_family'] == "Archlinux"

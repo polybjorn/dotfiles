@@ -1,0 +1,34 @@
+# Navidrome configuration — arch-server
+# https://www.navidrome.org/docs/usage/configuration-options/
+
+# --- Folders ---
+DataFolder = "/var/lib/navidrome"
+MusicFolder = "/mnt/tank/media/music"
+
+# --- Scanner ---
+# Lidarr adds files automatically; periodic scan as safety net alongside inotify watcher
+Scanner.Schedule = "@every 15m"
+Scanner.ScanOnStartup = true
+Scanner.PurgeMissing = "full"
+
+# --- Cache ---
+TranscodingCacheSize = "500MB"
+ImageCacheSize = "200MB"
+
+# --- Playback & UI ---
+# mtime-based "recently added" — Lidarr downloads preserve original release dates
+RecentlyAddedByModTime = true
+DefaultTheme = "Dark"
+
+# --- Transcoding ---
+EnableTranscodingConfig = true
+DefaultDownsamplingFormat = "opus"
+
+# --- Sessions ---
+SessionTimeout = "72h"
+
+# --- Security ---
+AuthRequestLimit = 5
+AuthWindowLength = "20s"
+
+Address = "127.0.0.1"
