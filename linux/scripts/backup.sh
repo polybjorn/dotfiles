@@ -75,6 +75,9 @@ if [ -d /opt/gotosocial/data/storage ]; then
     cp -a /opt/gotosocial/data/storage/ "$WORK_DIR/app-data/gotosocial-storage/"
 fi
 
+echo "Copying GPX trails..."
+cp -a /var/www/hiking-map/gpx/ "$WORK_DIR/app-data/gpx-trails/"
+
 # --- Compress ---
 
 echo "Compressing..."
