@@ -3,6 +3,7 @@
 [system]
 enabled_bridges[] = *
 timezone = "Europe/Oslo"
+timeout = 15
 
 [cache]
 type = "file"
