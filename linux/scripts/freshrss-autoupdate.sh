@@ -75,6 +75,10 @@ for service in "RSS-Bridge" "FreshRSS"; do
   [ -z "$latest_ver" ] && continue
 
   [ "$local_ver" = "$latest_ver" ] && continue
+  # Only update if latest is actually newer (not a stale/older feed entry)
+  if ! printf '%s\n' "$local_ver" "$latest_ver" | sort -V | tail -1 | grep -qx "$latest_ver"; then
+    continue
+  fi
 
   prev=$(grep "^${service}=" "$STATE_FILE" 2>/dev/null | tail -1 | cut -d= -f2) || true
   [ "$prev" = "$latest_ver" ] && continue

@@ -105,7 +105,9 @@ for service in "GoToSocial" "headscale" "FreshRSS" "Radicale" "Firefly III" "RSS
     latest_ver=$(extract_version "$latest_title") || true
     [ -z "$latest_ver" ] && continue
 
-    if [ "$local_ver" != "$latest_ver" ]; then
+    if [ "$local_ver" = "$latest_ver" ]; then
+        up_to_date=$((up_to_date + 1))
+    elif printf '%s\n' "$local_ver" "$latest_ver" | sort -V | tail -1 | grep -qx "$latest_ver"; then
         outdated+="• $service: $local_ver → $latest_ver"$'\n'
     else
         up_to_date=$((up_to_date + 1))

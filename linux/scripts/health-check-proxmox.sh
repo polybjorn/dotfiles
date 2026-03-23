@@ -26,7 +26,7 @@ alert() {
 }
 
 # --- Disk space ---
-for mount in / /mnt/tank; do
+for mount in /; do
   if mountpoint -q "$mount" 2>/dev/null || [ "$mount" = "/" ]; then
     DISK_PCT=$(df "$mount" 2>/dev/null | awk 'NR==2{gsub(/%/,""); print $5}')
     if [ -n "$DISK_PCT" ] && [ "$DISK_PCT" -gt 85 ]; then
@@ -50,11 +50,6 @@ if command -v zpool >/dev/null 2>&1; then
   fi
 fi
 
-# --- Mount points ---
-if ! mountpoint -q /mnt/tank 2>/dev/null; then
-  alert "urgent" "Mount Point Missing" "file_folder,warning" \
-    "/mnt/tank not mounted on $HOST"
-fi
 
 # --- Memory ---
 MEM_AVAIL_MB=$(awk '/MemAvailable/{printf "%d", $2/1024}' /proc/meminfo)
