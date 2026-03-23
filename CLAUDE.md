@@ -146,6 +146,7 @@ Dry-run: `ansible-playbook linux/ansible/site.yml --check --diff`
 | freshrss-yt-favicons | 1st 05:00 | freshrss-yt-favicons.sh |
 | rss-bridge-cache-cleanup | 04:00 daily | rss-bridge-cache-cleanup.sh |
 | wifi-watchdog | Every 2 min | wifi-watchdog.sh |
+| gpx-manifest | Path watcher | gpx-manifest.sh |
 
 ## Arch server systemd timers
 

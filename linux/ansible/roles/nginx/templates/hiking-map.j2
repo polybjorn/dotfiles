@@ -1,0 +1,17 @@
+server {
+    listen 8086 ssl;
+    server_name {{ tailscale_hostname }};
+
+    ssl_certificate /var/lib/tailscale/certs/{{ tailscale_hostname }}.crt;
+    ssl_certificate_key /var/lib/tailscale/certs/{{ tailscale_hostname }}.key;
+
+    root /var/www/hiking-map;
+    index index.html;
+
+    location ~* \.gpx$ {
+        types {
+            application/gpx+xml gpx;
+        }
+        expires 1h;
+    }
+}

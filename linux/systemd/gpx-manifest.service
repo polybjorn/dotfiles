@@ -1,0 +1,7 @@
+[Unit]
+Description=Generate hiking map GPX manifest
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/gpx-manifest.sh
+User=admin

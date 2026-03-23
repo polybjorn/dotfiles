@@ -11,3 +11,16 @@
     state: link
     force: true
   when: dashboard_repo.stat.exists
+
+- name: Check if hiking-map repo exists
+  stat:
+    path: "{{ user_home }}/repositories/hiking-map"
+  register: hiking_map_repo
+
+- name: Symlink hiking-map to /var/www/
+  file:
+    src: "{{ user_home }}/repositories/hiking-map"
+    dest: /var/www/hiking-map
+    state: link
+    force: true
+  when: hiking_map_repo.stat.exists
