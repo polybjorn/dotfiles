@@ -2,6 +2,7 @@
 - name: Pi server infrastructure
   hosts: pi
   become: true
+  gather_facts: false
 
   vars_files:
     - vars/private.yml
@@ -28,8 +29,13 @@
       - freshrss-yt-favicons.timer
       - freshrss-autoupdate.timer
       - monthly-review.timer
+      - gpx-manifest.path
 
   pre_tasks:
+    - name: Gather facts (only when needed)
+      setup:
+      tags: [sshd, nginx, fail2ban, sudoers]
+
     - name: Create autoupdate state directory
       file:
         path: /var/lib/freshrss-autoupdate
@@ -62,6 +68,7 @@
 - name: Arch-server infrastructure
   hosts: arch
   become: true
+  gather_facts: false
 
   vars_files:
     - vars/private.yml
@@ -84,6 +91,10 @@
       - qbt-cleanup.timer
 
   pre_tasks:
+    - name: Gather facts (only when needed)
+      setup:
+      tags: [sshd, nginx, fail2ban]
+
     - name: Set tailscale hostname for arch
       set_fact:
         tailscale_hostname: "{{ tailscale_hostname_arch }}"
@@ -122,6 +133,7 @@
 - name: Proxmox host infrastructure
   hosts: proxmox
   become: true
+  gather_facts: false
 
   vars_files:
     - vars/ssh_keys.yml
@@ -140,6 +152,10 @@
       - pkg-maintenance.timer
 
   pre_tasks:
+    - name: Gather facts (only when needed)
+      setup:
+      tags: [sshd]
+
     - name: Create backup directory
       file:
         path: "{{ user_home }}/backups"
