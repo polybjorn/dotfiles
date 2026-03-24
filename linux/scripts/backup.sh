@@ -94,9 +94,8 @@ if ! tar tzf "$TARBALL" >/dev/null 2>&1; then
     VERIFY_FAIL="Tarball is corrupt"
 else
     # Check key files exist inside
-    CONTENTS=$(tar tzf "$TARBALL")
     for key_file in databases/mariadb-all.sql databases/gotosocial.db configs/firefly-iii.env; do
-        if ! echo "$CONTENTS" | grep -q "$key_file"; then
+        if ! tar tzf "$TARBALL" | grep -q "$key_file"; then
             VERIFY_FAIL="${VERIFY_FAIL}Missing: $key_file\n"
         fi
     done

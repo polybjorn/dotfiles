@@ -136,9 +136,8 @@ VERIFY_FAIL=""
 if ! tar tzf "$TARBALL" >/dev/null 2>&1; then
   VERIFY_FAIL="Tarball is corrupt"
 else
-  CONTENTS=$(tar tzf "$TARBALL")
   for key_file in databases/postgres-all.sql configs/smb.conf; do
-    if ! echo "$CONTENTS" | grep -q "$key_file"; then
+    if ! tar tzf "$TARBALL" | grep -q "$key_file"; then
       VERIFY_FAIL="${VERIFY_FAIL}Missing: $key_file\n"
     fi
   done
