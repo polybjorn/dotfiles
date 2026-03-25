@@ -93,15 +93,16 @@ VERIFY_FAIL=""
 if ! tar tzf "$TARBALL" >/dev/null 2>&1; then
     VERIFY_FAIL="Tarball is corrupt"
 else
-    # Check key files exist inside
+    # List tarball once, check key files against the listing
+    TARBALL_LIST=$(tar tzf "$TARBALL")
     for key_file in databases/mariadb-all.sql databases/gotosocial.db configs/firefly-iii.env; do
-        if ! tar tzf "$TARBALL" | grep -q "$key_file"; then
+        if ! echo "$TARBALL_LIST" | grep -q "$key_file"; then
             VERIFY_FAIL="${VERIFY_FAIL}Missing: $key_file\n"
         fi
     done
 fi
 if [ -n "$VERIFY_FAIL" ]; then
-    alert_failure "integrity check failed: $VERIFY_FAIL"
+    cleanup_on_failure "integrity check failed: $VERIFY_FAIL"
 fi
 
 # Copy to Syncthing
