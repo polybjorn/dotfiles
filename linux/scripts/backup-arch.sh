@@ -60,7 +60,6 @@ config_files=(
   /etc/prowlarr/config.xml
   /etc/navidrome/navidrome.toml
   /etc/samba/smb.conf
-  /etc/service-schedule.conf
   /etc/paperless.conf
 )
 for f in "${config_files[@]}"; do
@@ -136,9 +135,9 @@ VERIFY_FAIL=""
 if ! tar tzf "$TARBALL" >/dev/null 2>&1; then
   VERIFY_FAIL="Tarball is corrupt"
 else
-  CONTENTS=$(tar tzf "$TARBALL")
+  TAR_LIST=$(tar tzf "$TARBALL")
   for key_file in databases/postgres-all.sql configs/smb.conf; do
-    if ! echo "$CONTENTS" | grep -q "$key_file"; then
+    if [[ "$TAR_LIST" != *"$key_file"* ]]; then
       VERIFY_FAIL="${VERIFY_FAIL}Missing: $key_file\n"
     fi
   done

@@ -4,7 +4,7 @@ set -euo pipefail
 # Renew Tailscale HTTPS certificates and reload nginx if updated.
 
 CERT_DIR="/var/lib/tailscale/certs"
-FQDN=$(tailscale status --json | jq -r '.Self.DNSName' | sed 's/\.$//')
+FQDN=$(tailscale cert 2>&1 | grep -oP 'use "tailscale cert \K[^"]+')
 
 if [[ -z "$FQDN" ]]; then
   echo "ERROR: could not determine Tailscale FQDN" >&2
