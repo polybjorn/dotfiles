@@ -118,6 +118,15 @@ alias zshrc='${EDITOR:-nano} ${ZDOTDIR}/.zshrc'
 alias aliases='${EDITOR:-nano} ${ZDOTDIR}/aliases.zsh'
 alias path='echo $PATH | tr ":" "\n"'
 
+# ── ZFS (Proxmox) ──────────────────────────────────────
+if command -v zpool &>/dev/null; then
+  alias scrub-status='zpool status tank'
+  alias scrub-start='zpool scrub tank'
+  alias scrub-pause='zpool scrub -p tank'
+  alias scrub-stop='zpool scrub -s tank'
+  alias scrub-timers='systemctl list-timers | grep scrub'
+fi
+
 # ── Claude Code ─────────────────────────────────────────
 alias cc='cd ~/code && claude'
 alias ccc='claude -c'
