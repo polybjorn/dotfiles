@@ -1,7 +1,7 @@
 #!/bin/zsh
 set -euo pipefail
 
-IMPORT_DIR="$HOME/Vault/Photos/Import"
+IMPORT_DIR="$HOME/Vault/Camera"
 PHOTOS_DIR="$HOME/Vault/Photos"
 LOG_FILE="$HOME/Vault/Photos/.photo-sort.log"
 

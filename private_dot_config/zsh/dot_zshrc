@@ -33,7 +33,6 @@ setopt SHARE_HISTORY
 
 # ── Shell behaviour ─────────────────────────────────────
 setopt AUTO_CD
-setopt CORRECT
 setopt GLOB_DOTS
 
 # ── Plugins ──────────────────────────────────────────────
