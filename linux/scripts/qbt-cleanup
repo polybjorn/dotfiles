@@ -2,7 +2,8 @@
 """qBittorrent seeding cleanup.
 
 Removes torrents that have been seeding for over a threshold
-but haven't reached a minimum ratio.
+but haven't reached a minimum ratio. Preserves a minimum number
+of torrents per tracker to maintain bonus points.
 
 Default: dry-run mode. Use --execute to actually delete.
 """
@@ -11,6 +12,7 @@ import argparse
 import http.cookiejar
 import json
 import os
+import re
 import sys
 import urllib.parse
 import urllib.request
@@ -18,6 +20,7 @@ import urllib.request
 QB_URL = "http://127.0.0.1:8080"
 DEFAULT_MIN_HOURS = 400
 DEFAULT_MIN_RATIO = 0.3
+DEFAULT_MIN_PER_TRACKER = 15
 
 
 def create_opener():
@@ -44,6 +47,80 @@ def get_torrents(opener):
     all_torrents = json.loads(resp.read().decode())
     # Keep only torrents that have finished downloading
     return [t for t in all_torrents if t.get("completion_on", 0) > 0]
+
+
+def get_torrent_trackers(opener, torrent_hash):
+    """Get tracker list for a single torrent."""
+    url = f"{QB_URL}/api/v2/torrents/trackers?hash={torrent_hash}"
+    req = urllib.request.Request(url)
+    resp = opener.open(req)
+    return json.loads(resp.read().decode())
+
+
+def tracker_site(url):
+    """Extract the site (base domain) from a tracker URL.
+
+    Groups multiple announce URLs from the same private tracker together.
+    e.g. 'tracker1.example.com' and 'tracker2.example.com' both -> 'example.com'
+    """
+    parsed = urllib.parse.urlparse(url)
+    hostname = parsed.hostname or ""
+    parts = hostname.split(".")
+    # For most trackers: take last two parts (example.com)
+    # For co.uk style TLDs this isn't perfect, but private trackers
+    # don't use those
+    if len(parts) >= 2:
+        return ".".join(parts[-2:])
+    return hostname
+
+
+def is_private_url(url):
+    """Detect private tracker URLs by the presence of a passkey.
+
+    Private trackers use passkeys in two common forms:
+    - Path: /6ff6eed06b9f5d07aa2a909dab8e3327/announce (hex or alphanumeric)
+    - Query: announce.php?passkey=a13daee39d7e873f...
+    Public trackers just have /announce with no credentials.
+    """
+    parsed = urllib.parse.urlparse(url)
+    # Passkey in path: a long alphanumeric segment before /announce
+    if re.search(r"/[0-9a-zA-Z]{16,}/", parsed.path):
+        return True
+    # Passkey as query parameter
+    if "passkey" in parsed.query:
+        return True
+    return False
+
+
+def build_tracker_map(opener, torrents):
+    """Map each torrent hash to its private tracker sites.
+
+    Returns:
+        hash_to_sites: dict mapping hash -> set of private tracker site domains
+        hash_is_private: dict mapping hash -> bool (has at least one private tracker)
+
+    Multiple announce URLs from the same site are grouped together,
+    so a torrent on tracker1.example.com and tracker2.example.com
+    counts as one site: example.com.
+    """
+    hash_to_sites = {}
+    hash_is_private = {}
+    for t in torrents:
+        h = t["hash"]
+        trackers = get_torrent_trackers(opener, h)
+        sites = set()
+        private = False
+        for tr in trackers:
+            url = tr.get("url", "")
+            if url.startswith("http") or url.startswith("udp"):
+                if is_private_url(url):
+                    private = True
+                    s = tracker_site(url)
+                    if s:
+                        sites.add(s)
+        hash_to_sites[h] = sites
+        hash_is_private[h] = private
+    return hash_to_sites, hash_is_private
 
 
 def fmt_size(b):
@@ -87,6 +164,12 @@ def main():
         help=f"Ratio threshold — delete if below this after min-hours (default: {DEFAULT_MIN_RATIO})",
     )
     p.add_argument(
+        "--min-per-tracker",
+        type=int,
+        default=DEFAULT_MIN_PER_TRACKER,
+        help=f"Keep at least this many torrents per tracker for bonus points (default: {DEFAULT_MIN_PER_TRACKER})",
+    )
+    p.add_argument(
         "--username",
         default=os.environ.get("QB_USERNAME", "admin"),
         help="qBittorrent username (or QB_USERNAME env)",
@@ -114,8 +197,18 @@ def main():
     login(opener, args.username, args.password)
     torrents = get_torrents(opener)
 
+    # Build tracker map: hash -> set of private tracker sites
+    print(f"Fetching tracker info for {len(torrents)} torrents...")
+    hash_to_domains, hash_is_private = build_tracker_map(opener, torrents)
+
+    # Count current torrents per private tracker site (across ALL completed torrents)
+    tracker_counts = {}
+    for domains in hash_to_domains.values():
+        for d in domains:
+            tracker_counts[d] = tracker_counts.get(d, 0) + 1
+
     min_seconds = args.min_hours * 3600
-    to_delete = []
+    candidates = []
     to_keep_mature = []  # Past threshold but good ratio
     to_keep_young = []  # Not yet past threshold
 
@@ -128,18 +221,63 @@ def main():
         elif ratio >= args.min_ratio:
             to_keep_mature.append(t)
         else:
-            to_delete.append(t)
+            candidates.append(t)
 
-    to_delete.sort(key=lambda t: t.get("ratio", 0))
+    # Sort candidates by ratio (lowest first = least useful deleted first)
+    candidates.sort(key=lambda t: t.get("ratio", 0))
+
+    # Filter candidates: skip any whose removal would drop a tracker below the minimum
+    to_delete = []
+    to_keep_tracker = []  # Kept to preserve tracker minimums
+    # Work on a mutable copy of counts to simulate removals
+    sim_counts = dict(tracker_counts)
+
+    for t in candidates:
+        h = t["hash"]
+        domains = hash_to_domains.get(h, set())
+        # Public-only torrents: no floor protection, always eligible
+        if not hash_is_private.get(h, False):
+            to_delete.append(t)
+            continue
+        # Private torrents: check if removal would drop ANY tracker below minimum
+        would_violate = False
+        for d in domains:
+            if sim_counts.get(d, 0) <= args.min_per_tracker:
+                would_violate = True
+                break
+
+        if would_violate:
+            to_keep_tracker.append(t)
+        else:
+            to_delete.append(t)
+            # Decrement simulated counts
+            for d in domains:
+                sim_counts[d] = sim_counts.get(d, 0) - 1
 
     mode = "EXECUTE" if args.execute else "DRY RUN"
-    print(f"=== qBittorrent Cleanup ({mode}) ===")
+    print(f"\n=== qBittorrent Cleanup ({mode}) ===")
     print(f"Rule: seeding > {args.min_hours}h AND ratio < {args.min_ratio}")
+    print(f"Tracker floor: keep >= {args.min_per_tracker} torrents per tracker")
     print(
         f"Total: {len(torrents)} completed torrents "
         f"({len(to_keep_young)} young, {len(to_keep_mature)} above ratio, "
+        f"{len(to_keep_tracker)} kept for tracker floor, "
         f"{len(to_delete)} to remove)"
     )
+
+    # Count public vs private
+    n_public = sum(1 for t in torrents if not hash_is_private.get(t["hash"], False))
+    n_private = len(torrents) - n_public
+
+    # Show per-tracker counts (private only — public have no floor)
+    print(f"\n  Torrents: {n_private} private, {n_public} public (no floor)")
+    if tracker_counts:
+        print(f"  Private tracker counts (current -> after cleanup):")
+        for domain in sorted(tracker_counts):
+            current = tracker_counts[domain]
+            after = sim_counts[domain]
+            flag = " *" if after <= args.min_per_tracker else ""
+            print(f"    {domain:<40} {current:>4} -> {after:>4}{flag}")
     print()
 
     if not to_delete:
@@ -169,12 +307,21 @@ def main():
         )
 
     # Also tally the kept torrents for comparison
-    kept_uploaded = sum(t.get("uploaded", 0) for t in to_keep_mature + to_keep_young)
+    kept_uploaded = sum(t.get("uploaded", 0) for t in to_keep_mature + to_keep_young + to_keep_tracker)
 
     print(f"  {'-' * 101}")
     print(f"  {len(to_delete)} torrents, {fmt_size(total_size)} to reclaim")
     print(f"  Total uploaded by these torrents: {fmt_size(total_uploaded)}")
     print(f"  Total uploaded by kept torrents:  {fmt_size(kept_uploaded)}")
+
+    if to_keep_tracker:
+        print(f"\n  {len(to_keep_tracker)} torrents spared to maintain tracker minimums:")
+        for t in to_keep_tracker:
+            name = t.get("name", "?")
+            if len(name) > 60:
+                name = name[:57] + "..."
+            sites = hash_to_domains.get(t["hash"], set())
+            print(f"    {name:<63} ({', '.join(sorted(sites))})")
 
     if args.execute:
         delete_files = not args.keep_files

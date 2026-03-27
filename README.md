@@ -122,6 +122,8 @@ Secrets are separated: chezmoi uses age encryption, Ansible uses a gitignored va
 | obsidian-new-year | Jan 1 09:00 | Create yearly/quarterly/monthly note structure |
 | obsidian-weekly-note | Mon 09:15 | Generate weekly planning note |
 | photo-sort | Every 30 min | Sort photos by EXIF date |
+| downloads-sort | Fri 09:00 | Sort downloads into Vault/Inbox |
+| res-filters | On file change | Rebuild RES subreddit filter backup |
 | vault-maintenance-weekly | Mon 09:30 | Orphan fixer + broken link check |
 | vault-maintenance-monthly | 1st 09:45 | Frontmatter audit + tag scan |
 

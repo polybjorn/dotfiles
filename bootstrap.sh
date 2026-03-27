@@ -28,7 +28,7 @@ link_file() {
 
 copy_file() {
   local src="$1" dst="$2"
-  cp "$src" "$dst"
+  sed "s|__HOME__|$HOME|g" "$src" > "$dst"
   ok "$(basename "$src") -> $dst (copy)"
 }
 
