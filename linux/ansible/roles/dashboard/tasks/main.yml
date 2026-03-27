@@ -24,3 +24,17 @@
     state: link
     force: true
   when: hiking_map_repo.stat.exists
+
+- name: Check if GPX backup exists
+  stat:
+    path: "{{ user_home }}/Vault/Backups/gpx"
+  register: gpx_backup
+
+- name: Sync GPX files from Vault backup to hiking-map
+  synchronize:
+    src: "{{ user_home }}/Vault/Backups/gpx/"
+    dest: "{{ user_home }}/repositories/hiking-map/gpx/"
+    delete: true
+    recursive: true
+  delegate_to: "{{ inventory_hostname }}"
+  when: hiking_map_repo.stat.exists and gpx_backup.stat.exists
