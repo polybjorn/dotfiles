@@ -3,7 +3,7 @@
 Video Library Cleanup Script
 =============================
 1. Strip unwanted subtitle tracks (keep: eng, nor, nob)
-2. Strip unwanted audio tracks (keep: eng, nor, nob, jpn + undefined)
+2. Strip unwanted audio tracks (keep: nor, nob + original language via Sonarr/Radarr API)
 3. Strip font attachments (conservative: keep fonts if remaining subs use ASS/SSA)
 4. Remove embedded cover art (mjpeg thumbnail streams)
 5. Remux AVI/M4V/MPG/FLV/TS/WMV → MKV (lossless copy)
@@ -47,8 +47,13 @@ def notify(title, message):
 # ── Configuration ──────────────────────────────────────────────────────────────
 
 KEEP_SUB_LANGS = {"eng", "nor", "nob"}
-KEEP_AUDIO_LANGS = {"eng", "nor", "nob", "jpn"}
+KEEP_AUDIO_LANGS = {"nor", "nob"}
 MEDIA_DIRS = ["/mnt/tank/media/movies", "/mnt/tank/media/series"]
+
+SONARR_URL = "http://localhost:8989"
+RADARR_URL = "http://localhost:7878"
+SONARR_CONFIG = "/var/lib/sonarr/config.xml"
+RADARR_CONFIG = "/var/lib/radarr/config.xml"
 REMUX_EXTENSIONS = {".avi", ".m4v", ".mpg", ".flv", ".ts", ".wmv"}
 ALL_VIDEO_EXTENSIONS = {".mkv", ".mp4", ".avi", ".m4v", ".mpg", ".flv", ".ts", ".wmv"}
 SRT_EXTENSIONS = {".srt"}
@@ -83,7 +88,75 @@ LANG_ALIAS = {
 }
 
 
+# Map Sonarr/Radarr language names to ffprobe ISO 639-2/B codes
+LANG_NAME_TO_CODE = {
+    "arabic": "ara", "bulgarian": "bul", "chinese": "chi", "czech": "cze",
+    "danish": "dan", "dutch": "dut", "english": "eng", "estonian": "est",
+    "finnish": "fin", "french": "fre", "german": "ger", "greek": "gre",
+    "hebrew": "heb", "hindi": "hin", "hungarian": "hun", "icelandic": "ice",
+    "indonesian": "ind", "italian": "ita", "japanese": "jpn", "korean": "kor",
+    "latvian": "lav", "lithuanian": "lit", "malay": "may", "norwegian": "nor",
+    "persian": "per", "polish": "pol", "portuguese": "por", "romanian": "rum",
+    "russian": "rus", "slovak": "slo", "slovenian": "slv", "spanish": "spa",
+    "swedish": "swe", "tamil": "tam", "telugu": "tel", "thai": "tha",
+    "turkish": "tur", "ukrainian": "ukr", "vietnamese": "vie",
+}
+
 # ── Helpers ────────────────────────────────────────────────────────────────────
+
+def _read_api_key(config_path):
+    """Read API key from Sonarr/Radarr config.xml."""
+    try:
+        with open(config_path) as f:
+            for line in f:
+                m = re.search(r"<ApiKey>([^<]+)</ApiKey>", line)
+                if m:
+                    return m.group(1)
+    except (OSError, PermissionError):
+        pass
+    return None
+
+
+def _build_original_lang_map():
+    """Build {path: original_lang_code} from Sonarr + Radarr APIs."""
+    lang_map = {}
+
+    for config, url, key in [
+        (RADARR_CONFIG, RADARR_URL, "movie"),
+        (SONARR_CONFIG, SONARR_URL, "series"),
+    ]:
+        api_key = _read_api_key(config)
+        if not api_key:
+            continue
+        endpoint = f"{url}/api/v3/{key}"
+        try:
+            result = subprocess.run(
+                ["curl", "-s", "-H", f"X-Api-Key: {api_key}", endpoint],
+                capture_output=True, text=True, timeout=30,
+            )
+            items = json.loads(result.stdout)
+        except (subprocess.TimeoutExpired, json.JSONDecodeError, OSError):
+            continue
+
+        for item in items:
+            path = item.get("path", "")
+            orig = item.get("originalLanguage", {})
+            name = orig.get("name", "").lower()
+            code = LANG_NAME_TO_CODE.get(name)
+            if path and code:
+                lang_map[path] = code
+
+    return lang_map
+
+
+def get_original_language(filepath, lang_map):
+    """Look up original language for a file from the pre-built map."""
+    fpath = str(filepath)
+    for path, code in lang_map.items():
+        if fpath.startswith(path):
+            return code
+    return None
+
 
 def format_size(size_bytes):
     for unit in ["B", "KB", "MB", "GB"]:
@@ -110,7 +183,7 @@ def probe(filepath):
 
 # ── Analysis ───────────────────────────────────────────────────────────────────
 
-def analyze(filepath, info):
+def analyze(filepath, info, original_lang=None):
     """Determine what work a file needs. Returns analysis dict."""
     streams = info.get("streams", [])
     ext = filepath.suffix.lower()
@@ -133,12 +206,32 @@ def analyze(filepath, info):
     keep_audio = []
     strip_audio = []
 
+    # Build set of languages to keep for this file
+    keep_langs = set(KEEP_AUDIO_LANGS)
+    if original_lang:
+        keep_langs.add(original_lang)
+        # Keep English dubs for Japanese content (anime)
+        if original_lang == "jpn":
+            keep_langs.add("eng")
+
+    # Find the default audio track — always keep as fallback for original
+    default_audio_idx = None
+    for s in audio:
+        disposition = s.get("disposition", {})
+        if disposition.get("default", 0) == 1:
+            default_audio_idx = s["index"]
+            break
+    if default_audio_idx is None and audio:
+        default_audio_idx = audio[0]["index"]
+
     for s in audio:
         lang = s.get("tags", {}).get("language", "")
-        if lang in KEEP_AUDIO_LANGS:
+        if s["index"] == default_audio_idx and not original_lang:
+            # No API data — keep default track as safety fallback
+            keep_audio.append(s)
+        elif lang in keep_langs:
             keep_audio.append(s)
         elif lang in ("", "und", "undetermined"):
-            # Keep undefined-language audio (often the only track, or unlabeled English)
             keep_audio.append(s)
         else:
             strip_audio.append(s)
@@ -260,7 +353,7 @@ def describe_actions(analysis):
     return " + ".join(parts)
 
 
-def process_file(filepath, dry_run=True):
+def process_file(filepath, dry_run=True, original_lang=None):
     """Process a single file. Returns result dict."""
     filepath = Path(filepath)
     ext = filepath.suffix.lower()
@@ -269,7 +362,7 @@ def process_file(filepath, dry_run=True):
     if info is None:
         return {"status": "error", "message": "ffprobe failed"}
 
-    a = analyze(filepath, info)
+    a = analyze(filepath, info, original_lang=original_lang)
     if not a["needs_work"]:
         return {"status": "skip"}
 
@@ -508,8 +601,13 @@ def main():
     log(f"{'=' * 60}")
     log(f"Video Cleanup — {mode}")
     log(f"Keep subs:  {', '.join(sorted(KEEP_SUB_LANGS))}")
-    log(f"Keep audio: {', '.join(sorted(KEEP_AUDIO_LANGS))}")
+    log(f"Keep audio: {', '.join(sorted(KEEP_AUDIO_LANGS))} + original language (via API)")
     log(f"{'=' * 60}")
+
+    # Build original language map from Sonarr/Radarr
+    log("Fetching original languages from Sonarr/Radarr...")
+    lang_map = _build_original_lang_map()
+    log(f"Got original language for {len(lang_map)} titles")
 
     # Find files
     log("Scanning for media files...")
@@ -538,7 +636,8 @@ def main():
 
             stats["scanned"] += 1
 
-            result = process_file(filepath, dry_run=dry_run)
+            orig_lang = get_original_language(filepath, lang_map)
+            result = process_file(filepath, dry_run=dry_run, original_lang=orig_lang)
             status = result["status"]
 
             if status == "skip":

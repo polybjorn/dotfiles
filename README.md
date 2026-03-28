@@ -97,7 +97,7 @@ Secrets are separated: chezmoi uses age encryption, Ansible uses a gitignored va
 - fail2ban intrusion detection (SSH jail)
 - Per-host SSH key management (authorized_keys)
 - NOPASSWD sudo for admin
-- Server scripts (backup, pkg-maintenance)
+- Server scripts (backup, pkg-maintenance, video-cleanup, qbt-cleanup, music-cleanup)
 - Systemd services and timers
 - Postgres, Sonarr, Prowlarr, Bazarr, Navidrome, Paperless, SABnzbd, Jellyfin, Samba
 
@@ -149,6 +149,8 @@ Secrets are separated: chezmoi uses age encryption, Ansible uses a gitignored va
 | backup-arch | 03:00 daily | Postgres, configs, app data backup |
 | health-check-arch | Every 4h | System diagnostics, ntfy alerts |
 | pkg-maintenance | Sun 09:00 | Package update/cleanup |
+| video-cleanup | Monthly | Strip unwanted audio/subtitle tracks, remux legacy containers |
+| qbt-cleanup | Daily | Clean up qBittorrent torrents |
 
 ### Proxmox (systemd timers)
 
