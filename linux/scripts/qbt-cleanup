@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """qBittorrent seeding cleanup.
 
-Removes torrents that have been seeding for over a threshold
-but haven't reached a minimum ratio. Preserves a minimum number
-of torrents per tracker to maintain bonus points.
+Private torrents: removes after seeding threshold if ratio is below minimum.
+  Preserves a floor of torrents per tracker for bonus points.
+Public torrents: removes after a shorter age threshold (no ratio check).
 
 Default: dry-run mode. Use --execute to actually delete.
 """
@@ -21,6 +21,7 @@ QB_URL = "http://127.0.0.1:8080"
 DEFAULT_MIN_HOURS = 400
 DEFAULT_MIN_RATIO = 0.3
 DEFAULT_MIN_PER_TRACKER = 15
+DEFAULT_PUBLIC_MIN_HOURS = 48
 
 
 def create_opener():
@@ -170,6 +171,12 @@ def main():
         help=f"Keep at least this many torrents per tracker for bonus points (default: {DEFAULT_MIN_PER_TRACKER})",
     )
     p.add_argument(
+        "--public-min-hours",
+        type=float,
+        default=DEFAULT_PUBLIC_MIN_HOURS,
+        help=f"Min seeding hours before deleting public torrents (default: {DEFAULT_PUBLIC_MIN_HOURS})",
+    )
+    p.add_argument(
         "--username",
         default=os.environ.get("QB_USERNAME", "admin"),
         help="qBittorrent username (or QB_USERNAME env)",
@@ -208,20 +215,31 @@ def main():
             tracker_counts[d] = tracker_counts.get(d, 0) + 1
 
     min_seconds = args.min_hours * 3600
+    public_min_seconds = args.public_min_hours * 3600
     candidates = []
     to_keep_mature = []  # Past threshold but good ratio
     to_keep_young = []  # Not yet past threshold
 
     for t in torrents:
+        h = t["hash"]
         seed_time = t.get("seeding_time", 0)
         ratio = t.get("ratio", 0)
+        is_private = hash_is_private.get(h, False)
 
-        if seed_time < min_seconds:
-            to_keep_young.append(t)
-        elif ratio >= args.min_ratio:
-            to_keep_mature.append(t)
+        if is_private:
+            # Private: age + ratio criteria
+            if seed_time < min_seconds:
+                to_keep_young.append(t)
+            elif ratio >= args.min_ratio:
+                to_keep_mature.append(t)
+            else:
+                candidates.append(t)
         else:
-            candidates.append(t)
+            # Public: age-only, no ratio check
+            if seed_time < public_min_seconds:
+                to_keep_young.append(t)
+            else:
+                candidates.append(t)
 
     # Sort candidates by ratio (lowest first = least useful deleted first)
     candidates.sort(key=lambda t: t.get("ratio", 0))
@@ -256,8 +274,9 @@ def main():
 
     mode = "EXECUTE" if args.execute else "DRY RUN"
     print(f"\n=== qBittorrent Cleanup ({mode}) ===")
-    print(f"Rule: seeding > {args.min_hours}h AND ratio < {args.min_ratio}")
-    print(f"Tracker floor: keep >= {args.min_per_tracker} torrents per tracker")
+    print(f"Private: seeding > {args.min_hours}h AND ratio < {args.min_ratio}")
+    print(f"Public:  seeding > {args.public_min_hours}h (no ratio check)")
+    print(f"Tracker floor: keep >= {args.min_per_tracker} torrents per private tracker")
     print(
         f"Total: {len(torrents)} completed torrents "
         f"({len(to_keep_young)} young, {len(to_keep_mature)} above ratio, "

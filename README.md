@@ -98,6 +98,7 @@ Secrets are separated: chezmoi uses age encryption, Ansible uses a gitignored va
 - Per-host SSH key management (authorized_keys)
 - NOPASSWD sudo for admin
 - Server scripts (backup, pkg-maintenance)
+- Media scripts: video-cleanup, music-cleanup, media-hygiene, qbt-cleanup
 - Systemd services and timers
 - Postgres, Sonarr, Prowlarr, Bazarr, Navidrome, Paperless, SABnzbd, Jellyfin, Samba
 
@@ -142,13 +143,17 @@ Secrets are separated: chezmoi uses age encryption, Ansible uses a gitignored va
 | rss-bridge-cache-cleanup | 04:00 daily | RSS-Bridge cache cleanup |
 | wifi-watchdog | Every 2 min | WiFi reconnection |
 
-### Arch-server (systemd timers)
+### Arch-server (systemd timers + crontab)
 
-| Timer | Schedule | Purpose |
+| Task | Schedule | Purpose |
 |---|---|---|
 | backup-arch | 03:00 daily | Postgres, configs, app data backup |
 | health-check-arch | Every 4h | System diagnostics, ntfy alerts |
 | pkg-maintenance | Sun 09:00 | Package update/cleanup |
+| media-hygiene | Sun 03:00 | Junk files, samples, orphaned dirs |
+| music-cleanup | Sun 03:30 | Artist renames, cover art, image resize |
+| video-cleanup | Sun 04:00 | Strip streams, remux, health checks |
+| qbt-cleanup | Sun 03:00 | Remove slow-seeding torrents |
 
 ### Proxmox (systemd timers)
 
