@@ -2,18 +2,33 @@
 """
 Video Library Cleanup Script
 =============================
-1. Strip unwanted subtitle tracks (keep: eng, nor, nob)
-2. Strip unwanted audio tracks (keep: nor, nob + original language via Sonarr/Radarr API)
-3. Strip font attachments (conservative: keep fonts if remaining subs use ASS/SSA)
-4. Remove embedded cover art (mjpeg thumbnail streams)
-5. Remux AVI/M4V/MPG/FLV/TS/WMV → MKV (lossless copy)
-6. Remove redundant external .srt files (when embedded sub in same language exists)
+Phase 1: Stream cleanup (with --execute)
+  1. Strip unwanted subtitle tracks (keep: eng, nor, nob)
+  2. Strip unwanted audio tracks (keep: nor, nob + original language via Sonarr/Radarr API)
+  3. Strip font attachments (conservative: keep fonts if remaining subs use ASS/SSA)
+  4. Remove embedded cover art (mjpeg thumbnail streams)
+  5. Remux AVI/M4V/MPG/FLV/TS/WMV → MKV (lossless copy)
+  6. Remux HEVC-in-MP4 → MKV (browsers can't direct-play HEVC from MP4)
+  7. Remux files with A/V duration mismatch >5s (fixes seek failures)
+Phase 2: External .srt cleanup (with --execute)
+  8. Remove redundant external .srt files (when embedded sub in same language exists)
+Phase 3: Video health checks (always runs, detection only, ntfy alert)
+  9. Double IDR frames (causes HLS playback failure in Jellyfin)
+  10. Corrupt/unreadable files
+  11. Missing video or audio streams
+  12. Suspiciously low bitrate for resolution
+  13. Interlaced video (forces deinterlace transcoding every playback)
+  14. Truncated/incomplete files (download interrupted)
+
+Sends a high-priority ntfy notification if any health issues are found.
 
 Usage:
   python3 video_cleanup.py                    # Dry-run (preview changes)
   python3 video_cleanup.py --execute          # Actually process files
   python3 video_cleanup.py --execute --resume # Resume interrupted run
-  python3 video_cleanup.py --limit 10         # Dry-run on first 10 actionable files
+  python3 video_cleanup.py --limit 10         # Dry-run on first 10 files per phase
+  python3 video_cleanup.py --phase 3          # Run only health checks
+  python3 video_cleanup.py --phase 1 --execute # Execute only stream cleanup
 """
 
 import subprocess
@@ -27,7 +42,7 @@ from pathlib import Path
 from datetime import datetime
 
 
-def notify(title, message):
+def notify(title, message, priority=None):
     """Send a push notification via ntfy."""
     try:
         env_file = Path.home() / ".config/dotfiles/env"
@@ -37,6 +52,8 @@ def notify(title, message):
                 if line.startswith("NTFY_TOPIC="):
                     topic = line.split("=", 1)[1].strip().strip('"\'')
         cmd = [str(Path.home() / ".local/bin/ntfy")]
+        if priority:
+            cmd.extend(["-p", priority])
         if topic:
             cmd.extend(["-t", topic])
         cmd.extend([title, message])
@@ -64,6 +81,15 @@ PROCESSED_FILE = os.path.join(LOG_DIR, "processed.txt")
 
 # Safety: if new file is less than this fraction of original, abort (protects against corruption)
 MIN_SIZE_RATIO = 0.50
+
+# Double IDR detection: two keyframes closer than this (seconds) = malformed encode
+# 42ms ≈ one frame at 24fps
+DOUBLE_IDR_THRESHOLD = 0.042
+
+# Audio codecs that browsers can direct-play (no transcoding needed)
+
+# A/V duration mismatch threshold (seconds) — above this triggers a remux fix
+DURATION_MISMATCH_THRESHOLD = 5.0
 
 # Map common filename language tags to ISO 639-2/B codes (used by ffprobe)
 LANG_ALIAS = {
@@ -181,6 +207,21 @@ def probe(filepath):
         return None
 
 
+def probe_format(filepath):
+    """Get stream + format info via ffprobe. Returns dict or None on failure."""
+    cmd = [
+        "ffprobe", "-v", "quiet", "-print_format", "json",
+        "-show_streams", "-show_format", str(filepath),
+    ]
+    try:
+        result = subprocess.run(cmd, capture_output=True, text=True, timeout=60)
+        if result.returncode != 0:
+            return None
+        return json.loads(result.stdout)
+    except (subprocess.TimeoutExpired, json.JSONDecodeError):
+        return None
+
+
 # ── Analysis ───────────────────────────────────────────────────────────────────
 
 def analyze(filepath, info, original_lang=None):
@@ -266,6 +307,15 @@ def analyze(filepath, info, original_lang=None):
     can_strip_attachments = len(attachments) > 0 and not kept_has_ass
 
     needs_remux = ext in REMUX_EXTENSIONS
+    # HEVC in MP4 containers: browsers can't direct-play, Jellyfin must transcode.
+    # Remuxing to MKV is lossless and lets Jellyfin direct-stream.
+    hevc_in_mp4 = (
+        ext == ".mp4"
+        and any(s.get("codec_name") == "hevc" for s in real_video)
+    )
+    if hevc_in_mp4:
+        needs_remux = True
+
     # Only count cover art removal if there's already another reason to remux.
     # Remuxing just for cover art causes net-negative savings (muxer overhead > tiny image).
     has_other_work = (
@@ -525,6 +575,102 @@ def analyze_srt(srt_path):
     return False, f"only copy of {lang} subs"
 
 
+
+def check_double_idr(filepath):
+    """
+    Check for double IDR frames (two keyframes within ~42ms) in the first 15s.
+    Returns (has_double, t1, t2) or None on error.
+    A double IDR at the start of a file indicates a malformed encode that can
+    break HLS segment boundaries in Jellyfin.
+    """
+    cmd = [
+        "ffprobe", "-v", "error", "-select_streams", "v:0",
+        "-show_entries", "packet=pts_time,flags",
+        "-read_intervals", "%+15",
+        "-of", "csv=p=0",
+        str(filepath),
+    ]
+    try:
+        res = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
+    except subprocess.TimeoutExpired:
+        return None
+
+    keyframe_times = []
+    for line in res.stdout.splitlines():
+        parts = line.split(",")
+        if len(parts) >= 2 and "K" in parts[1]:
+            try:
+                keyframe_times.append(float(parts[0]))
+            except ValueError:
+                continue
+
+    for i in range(len(keyframe_times) - 1):
+        gap = keyframe_times[i + 1] - keyframe_times[i]
+        if 0 < gap <= DOUBLE_IDR_THRESHOLD:
+            return (True, keyframe_times[i], keyframe_times[i + 1])
+
+    return (False, None, None)
+
+
+def check_truncated(filepath):
+    """
+    Check if a file is truncated by seeking to the last 5 seconds.
+    Returns True if truncated/corrupt at the end, False if OK, None on error.
+    """
+    cmd = [
+        "ffmpeg", "-v", "error", "-sseof", "-5",
+        "-i", str(filepath), "-f", "null", "-",
+    ]
+    try:
+        result = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
+        # Any errors in stderr or non-zero exit = likely truncated
+        if result.returncode != 0:
+            return True
+        # Filter out benign warnings
+        errors = [
+            line for line in result.stderr.strip().splitlines()
+            if line and "moov atom not found" not in line.lower()
+        ]
+        return len(errors) > 0
+    except subprocess.TimeoutExpired:
+        return None
+
+
+def fix_duration_mismatch(filepath, dry_run=True):
+    """
+    Remux a file to fix A/V duration mismatch (lossless, -c copy).
+    Returns (success, message) tuple.
+    """
+    ext = filepath.suffix.lower()
+    output_path = filepath.with_name(filepath.stem + ".duration_fix" + ext)
+
+    if dry_run:
+        return True, "would remux to fix duration mismatch"
+
+    cmd = ["ffmpeg", "-y", "-i", str(filepath), "-c", "copy", "-map", "0", str(output_path)]
+    try:
+        result = subprocess.run(cmd, capture_output=True, text=True, timeout=1800)
+    except subprocess.TimeoutExpired:
+        if output_path.exists():
+            output_path.unlink()
+        return False, "ffmpeg timed out"
+
+    if result.returncode != 0:
+        if output_path.exists():
+            output_path.unlink()
+        return False, f"ffmpeg failed: {result.stderr[:200]}"
+
+    # Safety: output should be roughly the same size
+    orig_size = filepath.stat().st_size
+    new_size = output_path.stat().st_size
+    if new_size < orig_size * 0.90:
+        output_path.unlink()
+        return False, f"output too small ({format_size(new_size)} vs {format_size(orig_size)})"
+
+    os.replace(str(output_path), str(filepath))
+    return True, "remuxed to fix duration mismatch"
+
+
 def find_srt_files(dirs):
     """Recursively find all .srt files."""
     files = []
@@ -580,6 +726,8 @@ def main():
                         help="Skip already-processed files")
     parser.add_argument("--limit", type=int, default=0,
                         help="Stop after N actionable files (0 = unlimited)")
+    parser.add_argument("--phase", type=int, choices=[1, 2, 3],
+                        help="Run only this phase (1=streams, 2=srt, 3=health)")
     args = parser.parse_args()
 
     dry_run = not args.execute
@@ -604,15 +752,14 @@ def main():
     log(f"Keep audio: {', '.join(sorted(KEEP_AUDIO_LANGS))} + original language (via API)")
     log(f"{'=' * 60}")
 
-    # Build original language map from Sonarr/Radarr
-    log("Fetching original languages from Sonarr/Radarr...")
-    lang_map = _build_original_lang_map()
-    log(f"Got original language for {len(lang_map)} titles")
+    run_phase = args.phase  # None = all phases
 
-    # Find files
-    log("Scanning for media files...")
-    files = find_media_files(MEDIA_DIRS)
-    log(f"Found {len(files)} media files")
+    # Find files (needed by Phase 1 and 3)
+    files = []
+    if run_phase in (None, 1, 3):
+        log("Scanning for media files...")
+        files = find_media_files(MEDIA_DIRS)
+        log(f"Found {len(files)} media files")
 
     # Resume support
     processed = load_processed(PROCESSED_FILE) if args.resume else set()
@@ -628,93 +775,239 @@ def main():
 
     processed_fh = open(PROCESSED_FILE, "a") if not dry_run else None
 
-    try:
-        for filepath in files:
-            fstr = str(filepath)
-            if fstr in processed:
-                continue
+    # ── Phase 1: Stream cleanup ───────────────────────────────────────
+    if run_phase in (None, 1):
+        log("Fetching original languages from Sonarr/Radarr...")
+        lang_map = _build_original_lang_map()
+        log(f"Got original language for {len(lang_map)} titles")
 
-            stats["scanned"] += 1
+        try:
+            for filepath in files:
+                fstr = str(filepath)
+                if fstr in processed:
+                    continue
 
-            orig_lang = get_original_language(filepath, lang_map)
-            result = process_file(filepath, dry_run=dry_run, original_lang=orig_lang)
-            status = result["status"]
+                stats["scanned"] += 1
 
-            if status == "skip":
-                stats["clean"] += 1
+                orig_lang = get_original_language(filepath, lang_map)
+                result = process_file(filepath, dry_run=dry_run, original_lang=orig_lang)
+                status = result["status"]
 
-            elif status == "would_process":
-                stats["would_process"] += 1
-                stats["actionable_hit"] += 1
-                log(f"  [WOULD] {filepath.name}")
-                log(f"          {result['message']}")
-                if args.limit and stats["actionable_hit"] >= args.limit:
-                    log(f"Reached --limit {args.limit}, stopping.")
-                    break
+                if status == "skip":
+                    stats["clean"] += 1
 
-            elif status == "processed":
-                stats["processed"] += 1
-                stats["actionable_hit"] += 1
-                stats["bytes_saved"] += result.get("saved", 0)
-                log(f"  [DONE] {filepath.name}")
-                log(f"         {result['message']} — saved {format_size(result['saved'])}")
-                if processed_fh:
-                    processed_fh.write(fstr + "\n")
-                    processed_fh.flush()
-                if args.limit and stats["actionable_hit"] >= args.limit:
-                    log(f"Reached --limit {args.limit}, stopping.")
-                    break
+                elif status == "would_process":
+                    stats["would_process"] += 1
+                    stats["actionable_hit"] += 1
+                    log(f"  [WOULD] {filepath.name}")
+                    log(f"          {result['message']}")
+                    if args.limit and stats["actionable_hit"] >= args.limit:
+                        log(f"Reached --limit {args.limit}, stopping.")
+                        break
 
-            elif status == "error":
-                stats["errors"] += 1
-                log(f"  [ERROR] {filepath.name}: {result['message']}", level="ERROR")
+                elif status == "processed":
+                    stats["processed"] += 1
+                    stats["actionable_hit"] += 1
+                    stats["bytes_saved"] += result.get("saved", 0)
+                    log(f"  [DONE] {filepath.name}")
+                    log(f"         {result['message']} — saved {format_size(result['saved'])}")
+                    if processed_fh:
+                        processed_fh.write(fstr + "\n")
+                        processed_fh.flush()
+                    if args.limit and stats["actionable_hit"] >= args.limit:
+                        log(f"Reached --limit {args.limit}, stopping.")
+                        break
 
-            # Progress every 500 files
-            if stats["scanned"] % 500 == 0:
-                elapsed = time.time() - start_time
-                rate = stats["scanned"] / elapsed if elapsed > 0 else 0
-                log(f"  ... {stats['scanned']}/{len(files)} scanned ({rate:.0f} files/sec)")
+                elif status == "error":
+                    stats["errors"] += 1
+                    log(f"  [ERROR] {filepath.name}: {result['message']}", level="ERROR")
 
-    except KeyboardInterrupt:
-        log("Interrupted by user (Ctrl+C)")
+                # Progress every 500 files
+                if stats["scanned"] % 500 == 0:
+                    elapsed = time.time() - start_time
+                    rate = stats["scanned"] / elapsed if elapsed > 0 else 0
+                    log(f"  ... {stats['scanned']}/{len(files)} scanned ({rate:.0f} files/sec)")
+
+        except KeyboardInterrupt:
+            log("Interrupted by user (Ctrl+C)")
 
     # ── Phase 2: External .srt cleanup ───────────────────────────────────
-    log("")
-    log(f"{'=' * 60}")
-    log(f"Phase 2: External .srt cleanup")
-    log(f"{'=' * 60}")
-    log("Scanning for .srt files...")
-    srt_files = find_srt_files(MEDIA_DIRS)
-    log(f"Found {len(srt_files)} .srt files")
-
     srt_stats = {"scanned": 0, "deleted": 0, "would_delete": 0, "kept": 0, "bytes_saved": 0}
 
-    for srt_path in srt_files:
-        srt_str = str(srt_path)
-        if srt_str in processed:
-            continue
+    if run_phase in (None, 2):
+        log("")
+        log(f"{'=' * 60}")
+        log(f"Phase 2: External .srt cleanup")
+        log(f"{'=' * 60}")
+        log("Scanning for .srt files...")
+        srt_files = find_srt_files(MEDIA_DIRS)
+        log(f"Found {len(srt_files)} .srt files")
+        if args.limit:
+            srt_files = srt_files[:args.limit]
+            log(f"Limited to first {args.limit} .srt files")
 
-        srt_stats["scanned"] += 1
-        should_delete, reason = analyze_srt(srt_path)
+        for srt_path in srt_files:
+            srt_str = str(srt_path)
+            if srt_str in processed:
+                continue
 
-        if should_delete:
-            srt_size = srt_path.stat().st_size
-            if dry_run:
-                srt_stats["would_delete"] += 1
-                log(f"  [WOULD DEL] {srt_path.name}: {reason}")
+            srt_stats["scanned"] += 1
+            should_delete, reason = analyze_srt(srt_path)
+
+            if should_delete:
+                srt_size = srt_path.stat().st_size
+                if dry_run:
+                    srt_stats["would_delete"] += 1
+                    log(f"  [WOULD DEL] {srt_path.name}: {reason}")
+                else:
+                    srt_path.unlink()
+                    srt_stats["deleted"] += 1
+                    srt_stats["bytes_saved"] += srt_size
+                    log(f"  [DEL] {srt_path.name}: {reason}")
+                    if processed_fh:
+                        processed_fh.write(srt_str + "\n")
+                        processed_fh.flush()
             else:
-                srt_path.unlink()
-                srt_stats["deleted"] += 1
-                srt_stats["bytes_saved"] += srt_size
-                log(f"  [DEL] {srt_path.name}: {reason}")
-                if processed_fh:
-                    processed_fh.write(srt_str + "\n")
-                    processed_fh.flush()
-        else:
-            srt_stats["kept"] += 1
+                srt_stats["kept"] += 1
 
     if processed_fh:
         processed_fh.close()
+
+    # ── Phase 3: Video health checks (always runs, detection only) ──────
+    health_issues = {
+        "double_idr": [],         # (filepath, t1, t2)
+        "corrupt": [],            # filepath
+        "no_video": [],           # filepath
+        "no_audio": [],           # filepath
+        "low_bitrate": [],        # (filepath, bitrate_kbps, height)
+
+        "interlaced": [],         # (filepath, field_order)
+        "truncated": [],          # filepath
+        "duration_mismatch": [],  # (filepath, fmt_dur, stream_dur)
+    }
+    duration_fixes = 0
+    health_scanned = 0
+
+    if run_phase in (None, 3):
+        log("")
+        log(f"{'=' * 60}")
+        log(f"Phase 3: Video health checks")
+        log(f"{'=' * 60}")
+
+        # Bitrate thresholds (kbps) — below these for the given resolution = suspect
+        BITRATE_FLOOR = {1080: 1000, 720: 500}
+
+        health_files = files[:args.limit] if args.limit else files
+        if args.limit:
+            log(f"Limited to first {args.limit} files")
+
+        for filepath in health_files:
+            health_scanned += 1
+
+            # Probe with format info (single ffprobe call)
+            info = probe_format(filepath)
+            if info is None:
+                health_issues["corrupt"].append(filepath)
+                log(f"  [CORRUPT]      {filepath.name} — ffprobe failed", level="WARN")
+                continue
+
+            streams = info.get("streams", [])
+            fmt = info.get("format", {})
+
+            video_streams = [
+                s for s in streams
+                if s.get("codec_type") == "video" and s.get("codec_name") != "mjpeg"
+            ]
+            audio_streams = [s for s in streams if s.get("codec_type") == "audio"]
+
+            # Check: no video stream
+            if not video_streams:
+                health_issues["no_video"].append(filepath)
+                log(f"  [NO VIDEO]     {filepath.name}", level="WARN")
+                continue
+
+            # Check: no audio stream
+            if not audio_streams:
+                health_issues["no_audio"].append(filepath)
+                log(f"  [NO AUDIO]     {filepath.name}", level="WARN")
+
+            # Check: suspiciously low bitrate
+            try:
+                duration = float(fmt.get("duration", 0))
+                file_size = filepath.stat().st_size
+                height = int(video_streams[0].get("height", 0))
+                if duration > 60:  # skip very short clips
+                    bitrate_kbps = (file_size * 8 / duration) / 1000
+                    for min_height, floor in sorted(BITRATE_FLOOR.items(), reverse=True):
+                        if height >= min_height and bitrate_kbps < floor:
+                            health_issues["low_bitrate"].append((filepath, bitrate_kbps, height))
+                            log(f"  [LOW BITRATE]  {filepath.name} — {bitrate_kbps:.0f} kbps ({height}p)",
+                                level="WARN")
+                            break
+            except (ValueError, OSError):
+                pass
+
+            # Check: double IDR (two keyframes within ~42ms) in first 15s
+            idr_result = check_double_idr(filepath)
+            if idr_result is not None:
+                has_double, t1, t2 = idr_result
+                if has_double:
+                    health_issues["double_idr"].append((filepath, t1, t2))
+                    log(f"  [DOUBLE IDR]   {filepath.name} — keyframes at {t1:.3f}s and {t2:.3f}s",
+                        level="WARN")
+
+
+            # Check: interlaced video (forces deinterlace transcoding)
+            if video_streams:
+                field_order = video_streams[0].get("field_order", "progressive")
+                if field_order not in ("progressive", "unknown", ""):
+                    health_issues["interlaced"].append((filepath, field_order))
+                    log(f"  [INTERLACED]   {filepath.name} — field_order: {field_order}",
+                        level="WARN")
+
+            # Check: A/V duration mismatch (causes seek failures, fixable with remux)
+            try:
+                fmt_duration = float(fmt.get("duration", 0))
+                if fmt_duration > 60:  # skip short clips
+                    worst_diff = 0
+                    worst_stream_dur = fmt_duration
+                    for s in video_streams + audio_streams:
+                        s_dur = float(s.get("duration", 0))
+                        if s_dur > 0:
+                            diff = abs(fmt_duration - s_dur)
+                            if diff > worst_diff:
+                                worst_diff = diff
+                                worst_stream_dur = s_dur
+                    if worst_diff > DURATION_MISMATCH_THRESHOLD:
+                        health_issues["duration_mismatch"].append(
+                            (filepath, fmt_duration, worst_stream_dur)
+                        )
+                        log(f"  [DUR MISMATCH] {filepath.name} — container: {fmt_duration:.1f}s vs stream: {worst_stream_dur:.1f}s",
+                            level="WARN")
+                        # Auto-fix: remux to align durations (lossless)
+                        success, msg = fix_duration_mismatch(filepath, dry_run=dry_run)
+                        if success and not dry_run:
+                            duration_fixes += 1
+                            log(f"               Fixed: {msg}")
+                        elif not success:
+                            log(f"               Fix failed: {msg}", level="ERROR")
+            except (ValueError, TypeError):
+                pass
+
+            # Check: truncated/incomplete file (seek to last 5 seconds)
+            is_truncated = check_truncated(filepath)
+            if is_truncated:
+                health_issues["truncated"].append(filepath)
+                log(f"  [TRUNCATED]    {filepath.name} — errors at end of file",
+                    level="WARN")
+
+            # Progress every 500 files
+            if health_scanned % 500 == 0:
+                elapsed_h = time.time() - start_time
+                rate = health_scanned / elapsed_h if elapsed_h > 0 else 0
+                log(f"  ... {health_scanned}/{len(health_files)} scanned ({rate:.0f} files/sec)")
+
+    total_health_issues = sum(len(v) for v in health_issues.values())
 
     # ── Update cumulative stats ─────────────────────────────────────────
     cumulative = load_cumulative_stats()
@@ -749,6 +1042,19 @@ def main():
         log(f"  Deleted:            {srt_stats['deleted']}")
         log(f"  .srt space saved:   {format_size(srt_stats['bytes_saved'])}")
     log(f"  Kept:               {srt_stats['kept']}")
+    log(f"  --- Health checks ---")
+    log(f"  Scanned:            {health_scanned}")
+    log(f"  Corrupt:            {len(health_issues['corrupt'])}")
+    log(f"  No video:           {len(health_issues['no_video'])}")
+    log(f"  No audio:           {len(health_issues['no_audio'])}")
+    log(f"  Low bitrate:        {len(health_issues['low_bitrate'])}")
+    log(f"  Double IDR:         {len(health_issues['double_idr'])}")
+
+    log(f"  Interlaced:         {len(health_issues['interlaced'])}")
+    log(f"  Truncated:          {len(health_issues['truncated'])}")
+    log(f"  Duration mismatch:  {len(health_issues['duration_mismatch'])}")
+    if duration_fixes > 0:
+        log(f"  Duration fixes:     {duration_fixes}")
     log(f"  --- This run ---")
     total_this_run = stats["bytes_saved"] + srt_stats.get("bytes_saved", 0)
     log(f"  Total saved:        {format_size(total_this_run)}")
@@ -760,7 +1066,34 @@ def main():
         log(f"  SRTs deleted:       {cumulative['total_srts_deleted']}")
     log(f"{'=' * 60}")
 
-    # ── Send notification ─────────────────────────────────────────────
+    # ── Send notifications ────────────────────────────────────────────
+    # High-priority alert for health issues (always, even on dry-run)
+    if total_health_issues > 0:
+        alert_parts = []
+        for label, key in [
+            ("CORRUPT", "corrupt"),
+            ("NO VIDEO", "no_video"),
+            ("NO AUDIO", "no_audio"),
+            ("LOW BITRATE", "low_bitrate"),
+            ("DOUBLE IDR", "double_idr"),
+
+            ("INTERLACED", "interlaced"),
+            ("TRUNCATED", "truncated"),
+            ("DURATION MISMATCH", "duration_mismatch"),
+        ]:
+            items = health_issues[key]
+            if not items:
+                continue
+            # Use filenames only (ntfy has size limits)
+            names = [str(x[0].name) if isinstance(x, tuple) else str(x.name) for x in items]
+            alert_parts.append(f"{label} ({len(items)}): {', '.join(names)}")
+        notify(
+            f"Video Health: {total_health_issues} issue(s)",
+            "\n".join(alert_parts),
+            priority="high",
+        )
+
+    # Normal-priority summary for cleanup work (only on --execute)
     if not dry_run:
         total_saved = stats["bytes_saved"] + srt_stats.get("bytes_saved", 0)
         has_work = stats["processed"] > 0 or srt_stats["deleted"] > 0
@@ -774,9 +1107,7 @@ def main():
                 parts.append(f"{format_size(total_saved)} saved")
             if stats["errors"] > 0:
                 parts.append(f"{stats['errors']} error(s)")
-            notify("Video Cleanup ✓", " · ".join(parts))
-        else:
-            notify("Video Cleanup ✓", "Nothing to process — library is clean")
+            notify("Video Cleanup", " | ".join(parts))
 
     log_fh.close()
 

@@ -6,18 +6,19 @@ Filesystem-level structural cleanup across all media folders.
 Companion to video_cleanup.py (which handles stream-level ffmpeg work).
 
 1. Remove known junk files (.DS_Store, Thumbs.db, stale app data)
-2. Detect and remove podcast duplicate episodes (UUID-suffixed copies)
-3. Remove empty directories (bottom-up)
-4. Report naming inconsistencies (log-only, never auto-renames)
+2. Remove sample video files (short clips bundled with downloads)
+3. Detect and remove podcast duplicate episodes (UUID-suffixed copies)
+4. Remove empty and orphaned directories (no video files, only leftover metadata)
+5. Report naming inconsistencies (log-only, never auto-renames)
 
 Usage:
-  python3 -B media_hygiene.py                # Dry-run (preview changes)
-  python3 -B media_hygiene.py --execute      # Actually clean up
+  media-hygiene.py                            # Dry-run (preview changes)
+  media-hygiene.py --execute                 # Actually clean up
+  media-hygiene.py --phase 4                 # Run only empty/orphaned dir cleanup
 """
 
 import os
 import re
-import sys
 import json
 import shutil
 import subprocess
@@ -46,12 +47,24 @@ PROTECTED_DIRS = {".cleanup", ".claude"}
 # Known junk filenames (case-insensitive match)
 JUNK_FILENAMES = {
     ".ds_store",
+    "._.ds_store",
     "thumbs.db",
     "desktop.ini",
     ".bridgesort",
     ".picasa.ini",
 }
 
+
+# Sample file detection: "sample" in filename, video extension, under this size
+SAMPLE_MAX_BYTES = 200 * 1024 * 1024  # 200 MB
+VIDEO_EXTENSIONS = {".mkv", ".mp4", ".avi", ".m4v", ".mpg", ".flv", ".ts", ".wmv"}
+SAMPLE_RE = re.compile(r"\bsample\b", re.IGNORECASE)
+
+# Directories that only contain these file types are considered orphaned (no real media)
+METADATA_EXTENSIONS = {".srt", ".sub", ".idx", ".nfo", ".txt", ".jpg", ".jpeg", ".png", ".nfo-orig"}
+
+# Only check for orphaned dirs in video libraries (not music/podcasts/books)
+VIDEO_DIRS = [MEDIA_ROOT / "movies", MEDIA_ROOT / "series"]
 
 # Podcast UUID pattern: (xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)
 UUID_RE = re.compile(r"\s*\([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\)")
@@ -149,7 +162,31 @@ def find_stale_app_data():
     return stale_files, stale_dirs
 
 
-# ── Phase 2: Podcast Duplicate Detection ──────────────────────────────────────
+# ── Phase 2: Sample File Detection ────────────────────────────────────────────
+
+def find_sample_files():
+    """Find video files with 'sample' in the name that are small enough to be junk."""
+    samples = []
+    for media_dir in VIDEO_DIRS:
+        if not media_dir.exists():
+            continue
+        for root, dirs, files in os.walk(media_dir):
+            dirs[:] = [d for d in dirs if d not in PROTECTED_DIRS]
+            for f in files:
+                if Path(f).suffix.lower() not in VIDEO_EXTENSIONS:
+                    continue
+                if not SAMPLE_RE.search(Path(f).stem):
+                    continue
+                path = Path(root) / f
+                try:
+                    if path.stat().st_size <= SAMPLE_MAX_BYTES:
+                        samples.append(path)
+                except OSError:
+                    pass
+    return samples
+
+
+# ── Phase 3: Podcast Duplicate Detection ──────────────────────────────────────
 
 def find_podcast_duplicates():
     """Find podcast episodes with UUID suffixes that have a clean counterpart."""
@@ -182,7 +219,7 @@ def find_podcast_duplicates():
     return duplicates, unique_uuid
 
 
-# ── Phase 3: Empty Directory Cleanup ──────────────────────────────────────────
+# ── Phase 4: Empty & Orphaned Directory Cleanup ──────────────────────────────
 
 def find_empty_dirs():
     """Find empty directories bottom-up across all media dirs."""
@@ -208,7 +245,62 @@ def find_empty_dirs():
     return empty
 
 
-# ── Phase 4: Inconsistency Report ────────────────────────────────────────────
+def _dir_has_video(path):
+    """Check if a directory (non-recursively) contains any video files."""
+    try:
+        for entry in os.scandir(path):
+            if entry.is_file() and Path(entry.name).suffix.lower() in VIDEO_EXTENSIONS:
+                return True
+    except OSError:
+        pass
+    return False
+
+
+def find_orphaned_dirs():
+    """Find directories in video libraries that contain only metadata (no video files).
+
+    These accumulate when Sonarr/Radarr replaces a file or a video is manually deleted,
+    leaving behind .srt, .nfo, .jpg etc.
+
+    Skips metadata subdirectories (e.g. Jellyfin episode thumbnails) whose parent
+    directory still contains video files.
+    """
+    orphaned = []
+
+    for media_dir in VIDEO_DIRS:
+        if not media_dir.exists():
+            continue
+        for root, _dirs, files in os.walk(media_dir, topdown=False):
+            path = Path(root)
+            if is_protected(path):
+                continue
+            if path == media_dir:
+                continue
+            # Skip if this dir has subdirectories (only check leaf dirs)
+            try:
+                has_subdirs = any(e.is_dir() for e in os.scandir(path))
+            except OSError:
+                continue
+            if has_subdirs:
+                continue
+            if not files:
+                continue  # truly empty dirs handled by find_empty_dirs
+            # Check if ALL files are metadata-only
+            all_metadata = all(
+                Path(f).suffix.lower() in METADATA_EXTENSIONS for f in files
+            )
+            if not all_metadata:
+                continue
+            # Skip metadata subdirs whose parent still has video files
+            # (e.g. Jellyfin "metadata/" folders with episode thumbnails)
+            if _dir_has_video(path.parent):
+                continue
+            orphaned.append(path)
+
+    return orphaned
+
+
+# ── Phase 5: Inconsistency Report ────────────────────────────────────────────
 
 def find_inconsistencies():
     """Find naming issues (report only, never fix)."""
@@ -252,6 +344,8 @@ def main():
     parser = argparse.ArgumentParser(description="Media library hygiene cleanup")
     parser.add_argument("--execute", action="store_true",
                         help="Actually clean up (default: dry-run)")
+    parser.add_argument("--phase", type=int, choices=[1, 2, 3, 4, 5],
+                        help="Run only this phase (1=junk, 2=samples, 3=podcasts, 4=dirs, 5=report)")
     args = parser.parse_args()
 
     dry_run = not args.execute
@@ -273,8 +367,9 @@ def main():
     stats = {
         "junk_files": 0, "junk_bytes": 0,
         "stale_files": 0, "stale_dirs": 0, "stale_bytes": 0,
+        "sample_files": 0, "sample_bytes": 0,
         "podcast_dupes": 0, "podcast_dupe_bytes": 0,
-        "empty_dirs": 0,
+        "empty_dirs": 0, "orphaned_dirs": 0, "orphaned_files": 0, "orphaned_bytes": 0,
         "inconsistencies": 0,
     }
 
@@ -283,126 +378,187 @@ def main():
     log(f"Root: {MEDIA_ROOT}")
     log(f"{'=' * 60}")
 
+    run_phase = args.phase  # None = all phases
+
     # ── Phase 1: Junk files ───────────────────────────────────────────────
-    log("")
-    log(f"{'─' * 40}")
-    log("Phase 1: Junk File Cleanup")
-    log(f"{'─' * 40}")
+    if run_phase in (None, 1):
+        log("")
+        log(f"{'─' * 40}")
+        log("Phase 1: Junk File Cleanup")
+        log(f"{'─' * 40}")
 
-    junk_files = find_junk_files()
-    stale_files, stale_dirs = find_stale_app_data()
+        junk_files = find_junk_files()
+        stale_files, stale_dirs = find_stale_app_data()
 
-    if not junk_files and not stale_files and not stale_dirs:
-        log("  No junk files found.")
-    else:
-        for path in sorted(junk_files):
-            size = path.stat().st_size
+        if not junk_files and not stale_files and not stale_dirs:
+            log("  No junk files found.")
+        else:
+            for path in sorted(junk_files):
+                size = path.stat().st_size
+                rel = path.relative_to(MEDIA_ROOT)
+                if dry_run:
+                    log(f"  [WOULD DEL] {rel} ({format_size(size)})")
+                else:
+                    path.unlink()
+                    log(f"  [DEL] {rel} ({format_size(size)})")
+                stats["junk_files"] += 1
+                stats["junk_bytes"] += size
+
+            for path in sorted(stale_files):
+                size = path.stat().st_size
+                rel = path.relative_to(MEDIA_ROOT)
+                if dry_run:
+                    log(f"  [WOULD DEL] {rel} ({format_size(size)}) — stale app data")
+                else:
+                    path.unlink()
+                    log(f"  [DEL] {rel} ({format_size(size)}) — stale app data")
+                stats["stale_files"] += 1
+                stats["stale_bytes"] += size
+
+            for path in sorted(stale_dirs):
+                size = dir_size(path)
+                rel = path.relative_to(MEDIA_ROOT)
+                if dry_run:
+                    log(f"  [WOULD RMDIR] {rel}/ ({format_size(size)}) — stale app data")
+                else:
+                    shutil.rmtree(path)
+                    log(f"  [RMDIR] {rel}/ ({format_size(size)}) — stale app data")
+                stats["stale_dirs"] += 1
+                stats["stale_bytes"] += size
+
+    # ── Phase 2: Sample files ─────────────────────────────────────────────
+    if run_phase in (None, 2):
+        log("")
+        log(f"{'─' * 40}")
+        log("Phase 2: Sample File Cleanup")
+        log(f"{'─' * 40}")
+
+        sample_files = find_sample_files()
+
+        if not sample_files:
+            log("  No sample files found.")
+        else:
+            for path in sorted(sample_files):
+                size = path.stat().st_size
+                rel = path.relative_to(MEDIA_ROOT)
+                if dry_run:
+                    log(f"  [WOULD DEL] {rel} ({format_size(size)})")
+                else:
+                    path.unlink()
+                    log(f"  [DEL] {rel} ({format_size(size)})")
+                stats["sample_files"] += 1
+                stats["sample_bytes"] += size
+
+    # ── Phase 3: Podcast duplicates ───────────────────────────────────────
+    if run_phase in (None, 3):
+        log("")
+        log(f"{'─' * 40}")
+        log("Phase 3: Podcast Duplicate Detection")
+        log(f"{'─' * 40}")
+
+        duplicates, unique_uuid = find_podcast_duplicates()
+
+        if not duplicates and not unique_uuid:
+            log("  No podcast duplicates found.")
+        else:
+            for uuid_path, clean_path in duplicates:
+                size = uuid_path.stat().st_size
+                rel = uuid_path.relative_to(MEDIA_ROOT)
+                clean_rel = clean_path.relative_to(MEDIA_ROOT)
+                if dry_run:
+                    log(f"  [WOULD DEL] {rel}")
+                    log(f"              duplicate of: {clean_rel}")
+                else:
+                    uuid_path.unlink()
+                    log(f"  [DEL] {rel}")
+                    log(f"        duplicate of: {clean_rel}")
+                stats["podcast_dupes"] += 1
+                stats["podcast_dupe_bytes"] += size
+
+            for uuid_path in unique_uuid:
+                rel = uuid_path.relative_to(MEDIA_ROOT)
+                log(f"  [NOTICE] {rel}")
+                log(f"           UUID in filename but no clean counterpart — keeping")
+
+    # ── Phase 4: Empty & orphaned directories ─────────────────────────────
+    if run_phase in (None, 4):
+        log("")
+        log(f"{'─' * 40}")
+        log("Phase 4: Empty & Orphaned Directory Cleanup")
+        log(f"{'─' * 40}")
+
+        empty_dirs = find_empty_dirs()
+        orphaned_dirs = find_orphaned_dirs()
+
+        if not empty_dirs and not orphaned_dirs:
+            log("  No empty or orphaned directories found.")
+        else:
+            for path in sorted(empty_dirs):
+                rel = path.relative_to(MEDIA_ROOT)
+                if dry_run:
+                    log(f"  [WOULD RMDIR] {rel}/")
+                else:
+                    try:
+                        path.rmdir()
+                        log(f"  [RMDIR] {rel}/")
+                    except OSError as e:
+                        log(f"  [ERROR] {rel}/: {e}", level="ERROR")
+                        continue
+                stats["empty_dirs"] += 1
+
+            for path in sorted(orphaned_dirs):
+                rel = path.relative_to(MEDIA_ROOT)
+                file_count = len(list(path.iterdir()))
+                total_size = sum(f.stat().st_size for f in path.iterdir() if f.is_file())
+                leftovers = ", ".join(sorted(f.name for f in path.iterdir()))
+                if dry_run:
+                    log(f"  [WOULD RMDIR] {rel}/ — orphaned ({file_count} file(s): {leftovers})")
+                else:
+                    shutil.rmtree(path)
+                    log(f"  [RMDIR] {rel}/ — orphaned ({file_count} file(s))")
+                stats["orphaned_dirs"] += 1
+                stats["orphaned_files"] += file_count
+                stats["orphaned_bytes"] += total_size
+
+        # Second pass: dirs that became empty after orphaned cleanup
+        newly_empty = find_empty_dirs()
+        for path in sorted(newly_empty):
             rel = path.relative_to(MEDIA_ROOT)
             if dry_run:
-                log(f"  [WOULD DEL] {rel} ({format_size(size)})")
-            else:
-                path.unlink()
-                log(f"  [DEL] {rel} ({format_size(size)})")
-            stats["junk_files"] += 1
-            stats["junk_bytes"] += size
-
-        for path in sorted(stale_files):
-            size = path.stat().st_size
-            rel = path.relative_to(MEDIA_ROOT)
-            if dry_run:
-                log(f"  [WOULD DEL] {rel} ({format_size(size)}) — stale app data")
-            else:
-                path.unlink()
-                log(f"  [DEL] {rel} ({format_size(size)}) — stale app data")
-            stats["stale_files"] += 1
-            stats["stale_bytes"] += size
-
-        for path in sorted(stale_dirs):
-            size = dir_size(path)
-            rel = path.relative_to(MEDIA_ROOT)
-            if dry_run:
-                log(f"  [WOULD RMDIR] {rel}/ ({format_size(size)}) — stale app data")
-            else:
-                shutil.rmtree(path)
-                log(f"  [RMDIR] {rel}/ ({format_size(size)}) — stale app data")
-            stats["stale_dirs"] += 1
-            stats["stale_bytes"] += size
-
-    # ── Phase 2: Podcast duplicates ───────────────────────────────────────
-    log("")
-    log(f"{'─' * 40}")
-    log("Phase 2: Podcast Duplicate Detection")
-    log(f"{'─' * 40}")
-
-    duplicates, unique_uuid = find_podcast_duplicates()
-
-    if not duplicates and not unique_uuid:
-        log("  No podcast duplicates found.")
-    else:
-        for uuid_path, clean_path in duplicates:
-            size = uuid_path.stat().st_size
-            rel = uuid_path.relative_to(MEDIA_ROOT)
-            clean_rel = clean_path.relative_to(MEDIA_ROOT)
-            if dry_run:
-                log(f"  [WOULD DEL] {rel}")
-                log(f"              duplicate of: {clean_rel}")
-            else:
-                uuid_path.unlink()
-                log(f"  [DEL] {rel}")
-                log(f"        duplicate of: {clean_rel}")
-            stats["podcast_dupes"] += 1
-            stats["podcast_dupe_bytes"] += size
-
-        for uuid_path in unique_uuid:
-            rel = uuid_path.relative_to(MEDIA_ROOT)
-            log(f"  [NOTICE] {rel}")
-            log(f"           UUID in filename but no clean counterpart — keeping")
-
-    # ── Phase 3: Empty directories ────────────────────────────────────────
-    log("")
-    log(f"{'─' * 40}")
-    log("Phase 3: Empty Directory Cleanup")
-    log(f"{'─' * 40}")
-
-    empty_dirs = find_empty_dirs()
-
-    if not empty_dirs:
-        log("  No empty directories found.")
-    else:
-        for path in sorted(empty_dirs):
-            rel = path.relative_to(MEDIA_ROOT)
-            if dry_run:
-                log(f"  [WOULD RMDIR] {rel}/")
+                log(f"  [WOULD RMDIR] {rel}/ (newly empty)")
             else:
                 try:
                     path.rmdir()
-                    log(f"  [RMDIR] {rel}/")
+                    log(f"  [RMDIR] {rel}/ (newly empty)")
                 except OSError as e:
                     log(f"  [ERROR] {rel}/: {e}", level="ERROR")
                     continue
             stats["empty_dirs"] += 1
 
-    # ── Phase 4: Inconsistency report ─────────────────────────────────────
-    log("")
-    log(f"{'─' * 40}")
-    log("Phase 4: Inconsistency Report")
-    log(f"{'─' * 40}")
+    # ── Phase 5: Inconsistency report ─────────────────────────────────────
+    if run_phase in (None, 5):
+        log("")
+        log(f"{'─' * 40}")
+        log("Phase 5: Inconsistency Report")
+        log(f"{'─' * 40}")
 
-    issues = find_inconsistencies()
+        issues = find_inconsistencies()
 
-    if not issues:
-        log("  No inconsistencies found.")
-    else:
-        for kind, name, path in issues:
-            if kind == "movie_year":
-                log(f"  [WARN] Movie folder missing year: {name}", level="WARN")
-            stats["inconsistencies"] += 1
+        if not issues:
+            log("  No inconsistencies found.")
+        else:
+            for kind, name, path in issues:
+                if kind == "movie_year":
+                    log(f"  [WARN] Movie folder missing year: {name}", level="WARN")
+                stats["inconsistencies"] += 1
 
     # ── Update cumulative stats ───────────────────────────────────────────
     cumulative = load_cumulative_stats()
-    total_bytes = stats["junk_bytes"] + stats["stale_bytes"] + stats["podcast_dupe_bytes"]
-    total_files = stats["junk_files"] + stats["stale_files"] + stats["podcast_dupes"]
-    total_dirs = stats["stale_dirs"] + stats["empty_dirs"]
+    total_bytes = (stats["junk_bytes"] + stats["stale_bytes"] + stats["sample_bytes"]
+                   + stats["podcast_dupe_bytes"] + stats["orphaned_bytes"])
+    total_files = (stats["junk_files"] + stats["stale_files"] + stats["sample_files"]
+                   + stats["podcast_dupes"] + stats["orphaned_files"])
+    total_dirs = stats["stale_dirs"] + stats["empty_dirs"] + stats["orphaned_dirs"]
 
     if not dry_run:
         cumulative["total_files_deleted"] += total_files
@@ -425,10 +581,14 @@ def main():
     log(f"  {verb}:            {stats['junk_files']} file(s) ({format_size(stats['junk_bytes'])})")
     log(f"  --- Stale app data ---")
     log(f"  {verb}:            {stats['stale_files']} file(s), {stats['stale_dirs']} dir(s) ({format_size(stats['stale_bytes'])})")
+    log(f"  --- Sample files ---")
+    log(f"  {verb}:            {stats['sample_files']} sample(s) ({format_size(stats['sample_bytes'])})")
     log(f"  --- Podcast duplicates ---")
     log(f"  {verb}:            {stats['podcast_dupes']} duplicate(s) ({format_size(stats['podcast_dupe_bytes'])})")
     log(f"  --- Empty directories ---")
     log(f"  {verb_dir}:         {stats['empty_dirs']} empty dir(s)")
+    log(f"  --- Orphaned directories ---")
+    log(f"  {verb_dir}:         {stats['orphaned_dirs']} dir(s), {stats['orphaned_files']} file(s) ({format_size(stats['orphaned_bytes'])})")
     log(f"  --- Inconsistencies ---")
     log(f"  Warnings:            {stats['inconsistencies']}")
     log(f"  --- This run ---")
