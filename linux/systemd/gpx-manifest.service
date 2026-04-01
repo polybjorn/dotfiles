@@ -1,7 +1,13 @@
 [Unit]
-Description=Generate hiking map GPX manifest
+Description=Watch for GPX file changes and rebuild manifest
+After=local-fs.target
 
 [Service]
-Type=oneshot
-ExecStart=/usr/local/bin/gpx-manifest.sh
+Type=simple
 User=admin
+ExecStart=/usr/local/bin/gpx-manifest-watch.sh
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

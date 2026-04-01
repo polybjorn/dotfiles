@@ -1,0 +1,10 @@
+server {
+    listen 8087 ssl;
+    server_name {{ tailscale_hostname }};
+
+    ssl_certificate /var/lib/tailscale/certs/{{ tailscale_hostname }}.crt;
+    ssl_certificate_key /var/lib/tailscale/certs/{{ tailscale_hostname }}.key;
+
+    root /var/www/pinpoints;
+    index index.html;
+}

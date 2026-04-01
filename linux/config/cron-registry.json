@@ -10,7 +10,7 @@
         { "id": "freshrss-maintenance", "name": "RSS maintenance", "description": "Cache cleanup, autoupdate & YT favicons (1st)", "schedule": "04:00" },
         { "id": "wifi-watchdog", "name": "WiFi watchdog", "description": "Network reconnection", "schedule": "every 2m" },
         { "id": "monthly-review", "name": "Monthly review", "description": "Monthly review reminder", "schedule": "1st 09:00" },
-        { "id": "gpx-manifest", "name": "GPX manifest", "description": "Rebuild trail index on change", "schedule": "path trigger" }
+        { "id": "gpx-manifest", "name": "GPX manifest", "description": "Rebuild trail index on change", "schedule": "file watcher" }
       ]
     },
     {

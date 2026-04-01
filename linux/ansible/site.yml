@@ -30,7 +30,7 @@
       - pkg-maintenance.timer
       - wifi-watchdog.timer
       - monthly-review.timer
-      - gpx-manifest.path
+      - gpx-manifest.service
 
   pre_tasks:
     - name: Gather facts (only when needed)

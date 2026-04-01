@@ -139,7 +139,7 @@ Secrets are separated: chezmoi uses age encryption, Ansible uses a gitignored va
 | freshrss-maintenance | 04:00 daily | Cache cleanup, autoupdate, YT favicons (1st) |
 | wifi-watchdog | Every 2 min | WiFi reconnection |
 | monthly-review | 1st 09:00 | Monthly review reminder |
-| gpx-manifest | Path trigger | Rebuild trail index on change |
+| gpx-manifest | File watcher | Rebuild trail index on change |
 
 ### Arch-server (systemd timers + crontab)
 

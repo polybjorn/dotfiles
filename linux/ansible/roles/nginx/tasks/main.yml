@@ -24,7 +24,7 @@
     - "templates/{{ group_names[0] }}/*.j2"
   notify: reload-nginx
 
-- name: Enable nginx sites (Arch)
+- name: Enable nginx sites
   file:
     src: "/etc/nginx/sites-available/{{ item | basename | regex_replace('\\.j2$', '') }}"
     dest: "/etc/nginx/sites-enabled/{{ item | basename | regex_replace('\\.j2$', '') }}"
@@ -32,5 +32,4 @@
     force: true
   with_fileglob:
     - "templates/{{ group_names[0] }}/*.j2"
-  when: ansible_facts['os_family'] == "Archlinux"
   notify: reload-nginx

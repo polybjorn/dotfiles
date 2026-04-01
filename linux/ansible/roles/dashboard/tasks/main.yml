@@ -25,6 +25,19 @@
     force: true
   when: hiking_map_repo.stat.exists
 
+- name: Check if pinpoints repo exists
+  stat:
+    path: "{{ user_home }}/repositories/pinpoints"
+  register: pinpoint_map_repo
+
+- name: Symlink pinpoints to /var/www/
+  file:
+    src: "{{ user_home }}/repositories/pinpoints"
+    dest: /var/www/pinpoints
+    state: link
+    force: true
+  when: pinpoint_map_repo.stat.exists
+
 - name: Check if GPX backup exists
   stat:
     path: "{{ user_home }}/Vault/Backups/gpx"
@@ -38,3 +51,16 @@
     recursive: true
   delegate_to: "{{ inventory_hostname }}"
   when: hiking_map_repo.stat.exists and gpx_backup.stat.exists
+
+- name: Check if pinpoints backup exists
+  stat:
+    path: "{{ user_home }}/Vault/Backups/pinpoints"
+  register: pinpoints_backup
+
+- name: Symlink places.json from Vault backup to pinpoints
+  file:
+    src: "{{ user_home }}/Vault/Backups/pinpoints/places.json"
+    dest: "{{ user_home }}/repositories/pinpoints/places.json"
+    state: link
+    force: true
+  when: pinpoint_map_repo.stat.exists and pinpoints_backup.stat.exists
