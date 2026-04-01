@@ -101,22 +101,12 @@ else
   echo "  [skip] pi-dashboard repo not found at $DASHBOARD"
 fi
 
-# ── Sudoers for stats-api timer control ───────────────────
-TIMERS="backup.timer health-check.timer freshrss-refresh.timer freshrss-digest.timer nightmode-on.timer nightmode-off.timer pkg-maintenance.timer wifi-watchdog.timer rss-bridge-cache-cleanup.timer freshrss-yt-favicons.timer"
-{
-  for t in $TIMERS; do
-    echo "www-data ALL=(root) NOPASSWD: /usr/bin/systemctl enable $t"
-    echo "www-data ALL=(root) NOPASSWD: /usr/bin/systemctl disable $t"
-  done
-} > /etc/sudoers.d/020_pi-cron
-chmod 440 /etc/sudoers.d/020_pi-cron
-echo "  [ok] sudoers for timer control"
-
 # ── Backup directories ───────────────────────────────────
 mkdir -p "$USER_HOME/backups" "$USER_HOME/Vault/Backups"
 chown "$USER_NAME:$USER_NAME" "$USER_HOME/backups" "$USER_HOME/Vault/Backups"
 
 # ── Reload and enable timers ─────────────────────────────
+TIMERS="backup-pi.timer health-check-pi.timer freshrss-digest.timer freshrss-maintenance.timer pkg-maintenance.timer wifi-watchdog.timer"
 echo ""
 echo "Reloading systemd and enabling timers..."
 systemctl daemon-reload

@@ -100,15 +100,6 @@ if [ -n "$LXC_DOWN" ]; then
     "$(echo -e "Stopped containers on $HOST:\n$LXC_DOWN")"
 fi
 
-# --- VM ---
-if command -v qm >/dev/null 2>&1; then
-  VM_STATUS=$(qm status 101 2>/dev/null | awk '{print $2}')
-  if [ -n "$VM_STATUS" ] && [ "$VM_STATUS" != "running" ]; then
-    alert "default" "VM Not Running" "desktop_computer,information_source" \
-      "VM 101 is $VM_STATUS on $HOST"
-  fi
-fi
-
 # --- Network ---
 if ! tailscale status >/dev/null 2>&1; then
   alert "high" "Network Issue" "globe_with_meridians,warning" \

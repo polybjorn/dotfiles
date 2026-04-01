@@ -20,3 +20,7 @@ credentials.json
 service-account*.json
 *.sqlite
 *.db
+
+# claude code
+CLAUDE.md
+.claude/

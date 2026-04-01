@@ -1,8 +1,8 @@
 [Unit]
-Description=Health check every 4 hours (arch-server)
+Description=Daily arch-server health check
 
 [Timer]
-OnCalendar=*-*-* 04,08,12,16,20:00:00
+OnCalendar=*-*-* 09:00:00
 Persistent=true
 
 [Install]

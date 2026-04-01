@@ -1,14 +1,28 @@
 #!/bin/bash
-# Auto-update whitelisted services when FreshRSS detects a new release.
-# Only acts on safe, git-based services. Tracks state to avoid re-running.
-# Post-update patches are re-applied via freshrss-patch.sh.
+# Nightly FreshRSS & RSS-Bridge maintenance:
+#   1. Clean stale RSS-Bridge cache
+#   2. Auto-update FreshRSS & RSS-Bridge if new release
+#   3. Refresh YouTube channel avatars (1st of month only)
 set -euo pipefail
 
+SCRIPT_DIR="$(dirname "$(readlink -f "$0")")"
 DB="/var/www/FreshRSS/data/users/freshrss/db.sqlite"
 NTFY_URL="http://localhost:2586/pi-alerts"
+
+# ── RSS-Bridge cache cleanup ─────────────────────────────
+
+CACHE_DIR="/var/www/rss-bridge/cache"
+if [ -d "$CACHE_DIR" ]; then
+  count=$(find "$CACHE_DIR" -name '*.cache' -mmin +1440 | wc -l)
+  find "$CACHE_DIR" -name '*.cache' -mmin +1440 -delete
+  echo "Cache cleanup: removed $count stale files"
+fi
+
+# ── Auto-update whitelisted services ─────────────────────
+
 STATE_DIR="/var/lib/freshrss-autoupdate"
 STATE_FILE="$STATE_DIR/state"
-PATCH_SCRIPT="$(dirname "$(readlink -f "$0")")/freshrss-patch.sh"
+PATCH_SCRIPT="$SCRIPT_DIR/freshrss-patch.sh"
 
 mkdir -p "$STATE_DIR"
 touch "$STATE_FILE"
@@ -75,7 +89,6 @@ for service in "RSS-Bridge" "FreshRSS"; do
   [ -z "$latest_ver" ] && continue
 
   [ "$local_ver" = "$latest_ver" ] && continue
-  # Only update if latest is actually newer (not a stale/older feed entry)
   if ! printf '%s\n' "$local_ver" "$latest_ver" | sort -V | tail -1 | grep -qx "$latest_ver"; then
     continue
   fi
@@ -94,6 +107,39 @@ if [ -n "$updated" ]; then
   curl -s -o /dev/null \
     -H "Title: Services auto-updated" \
     -H "Tags: arrow_up,wrench" \
-    -d "$(echo -e "From: freshrss-autoupdate\n\n$updated")" \
+    -d "$(echo -e "From: freshrss-maintenance\n\n$updated")" \
     "$NTFY_URL"
 fi
+
+# ── YouTube favicons (1st of month only) ─────────────────
+
+if [ "$(date +%d)" = "01" ]; then
+  echo "1st of month — refreshing YouTube favicons"
+
+  SALT=$(grep -oP "'salt'\s*=>\s*'\K[^']+" /var/www/FreshRSS/data/config.php)
+  USERNAME="freshrss"
+  FAVICONS_DIR="/var/www/FreshRSS/data/favicons"
+
+  sqlite3 "$DB" "SELECT id, website FROM feed WHERE url LIKE '%YoutubeBridge%' OR (url LIKE '%FilterBridge%' AND url LIKE '%YoutubeBridge%');" | while IFS='|' read -r feed_id website; do
+    hash=$(php -r "echo hash('crc32b', '${SALT}${feed_id}${USERNAME}');")
+    ico_path="${FAVICONS_DIR}/${hash}.ico"
+
+    [ -z "$website" ] && continue
+
+    avatar_url=$(curl -sL --max-time 10 "$website" 2>/dev/null | grep -oP '"avatar":\{"thumbnails":\[\{"url":"\K[^"]+' | head -1) || true
+    [ -z "$avatar_url" ] && continue
+
+    if curl -sL --max-time 10 "$avatar_url" -o "$ico_path" 2>/dev/null; then
+      sqlite3 "$DB" "UPDATE feed SET attributes = json_set(COALESCE(attributes, '{}'), '$.customFavicon', json('true')) WHERE id = $feed_id;"
+    else
+      rm -f "$ico_path"
+    fi
+
+    sleep 1
+  done
+
+  chown -R www-data:www-data "$FAVICONS_DIR"
+  echo "YouTube favicon refresh complete"
+fi
+
+echo "Maintenance complete"

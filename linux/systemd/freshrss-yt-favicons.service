@@ -1,6 +1,0 @@
-[Unit]
-Description=Refresh YouTube channel avatars in FreshRSS
-
-[Service]
-Type=oneshot
-ExecStart=/usr/local/bin/freshrss-yt-favicons.sh

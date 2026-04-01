@@ -1,6 +1,0 @@
-[Unit]
-Description=Health check with ntfy alerts
-
-[Service]
-Type=oneshot
-ExecStart=/usr/local/bin/health-check.sh

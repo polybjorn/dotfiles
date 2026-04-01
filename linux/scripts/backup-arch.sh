@@ -29,7 +29,7 @@ alert_failure() {
       -H "Title: Backup Failed" \
       -H "Priority: high" \
       -H "Tags: rotating_light,warning" \
-      -d "$(echo -e "From: backup-arch (daily 03:00)\n\nBackup failed on $HOST: $msg")" \
+      -d "$(echo -e "From: backup-arch (daily 02:30)\n\nBackup failed on $HOST: $msg")" \
       "$NTFY_URL" || true
   fi
 }

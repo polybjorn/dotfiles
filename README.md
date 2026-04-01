@@ -86,7 +86,7 @@ Secrets are separated: chezmoi uses age encryption, Ansible uses a gitignored va
 - sshd hardening (key-only auth, no root login, AllowUsers)
 - fail2ban intrusion detection (SSH + nginx jails)
 - Per-host SSH key management (authorized_keys)
-- Server scripts (backup, health check, FreshRSS, nightmode, etc.)
+- Server scripts (backup, health check, FreshRSS maintenance, etc.)
 - Systemd services and timers
 - Nginx reverse proxy configs (Jinja2 templates)
 - Server configs (ntfy, cloudflared, unattended-upgrades, radicale, etc.)
@@ -132,35 +132,34 @@ Secrets are separated: chezmoi uses age encryption, Ansible uses a gitignored va
 
 | Timer | Schedule | Purpose |
 |---|---|---|
-| health-check | Every 4h | System diagnostics, ntfy alerts |
-| backup | 02:30 daily | Full server backup |
+| backup-pi | 02:30 daily | Full server backup |
+| health-check-pi | 09:00 daily | System diagnostics, ntfy alerts |
 | pkg-maintenance | Sun 09:00 | Package update/cleanup |
-| nightmode | 01:00-07:00 | Disable/enable nginx sites |
-| freshrss-refresh | */15 07-23h | FreshRSS feed refresh |
 | freshrss-digest | Mon 08:00 | Weekly release/feed report |
-| freshrss-autoupdate | 09:00 daily | Auto-update RSS-Bridge & FreshRSS |
-| freshrss-yt-favicons | 1st 05:00 | YouTube favicon refresh |
-| rss-bridge-cache-cleanup | 04:00 daily | RSS-Bridge cache cleanup |
+| freshrss-maintenance | 04:00 daily | Cache cleanup, autoupdate, YT favicons (1st) |
 | wifi-watchdog | Every 2 min | WiFi reconnection |
+| monthly-review | 1st 09:00 | Monthly review reminder |
+| gpx-manifest | Path trigger | Rebuild trail index on change |
 
 ### Arch-server (systemd timers + crontab)
 
-| Task | Schedule | Purpose |
+| Timer | Schedule | Purpose |
 |---|---|---|
-| backup-arch | 03:00 daily | Postgres, configs, app data backup |
-| health-check-arch | Every 4h | System diagnostics, ntfy alerts |
+| backup-arch | 02:30 daily | Postgres, configs, app data backup |
+| health-check-arch | 09:00 daily | System diagnostics, ntfy alerts |
 | pkg-maintenance | Sun 09:00 | Package update/cleanup |
+| tailscale-certrenew | 02:00 daily | Renew Tailscale HTTPS certs |
+| qbt-cleanup | 1st 03:00 | Remove slow-seeding torrents |
 | media-hygiene | Sun 03:00 | Junk files, samples, orphaned dirs |
 | music-cleanup | Sun 03:30 | Artist renames, cover art, image resize |
 | video-cleanup | Sun 04:00 | Strip streams, remux, health checks |
-| qbt-cleanup | Sun 03:00 | Remove slow-seeding torrents |
 
 ### Proxmox (systemd timers)
 
 | Timer | Schedule | Purpose |
 |---|---|---|
-| backup-proxmox | 02:00 daily | Host configs + ZFS metadata backup |
-| health-check-proxmox | Every 4h | System diagnostics, ntfy alerts |
+| backup-proxmox | 02:30 daily | Host configs & ZFS metadata backup |
+| health-check-proxmox | 09:00 daily | System diagnostics, ntfy alerts |
 | pkg-maintenance | Sun 09:00 | Package update/cleanup |
 
 ## Repo structure

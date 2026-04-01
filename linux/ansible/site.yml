@@ -16,18 +16,19 @@
     authorized_ssh_keys:
       - "{{ ssh_pubkeys.mac }}"
 
+    claude_files:
+      - src: "{{ lookup('env', 'HOME') }}/repositories/dotfiles/CLAUDE.md"
+        dest: "{{ dotfiles_dir }}/CLAUDE.md"
+      - src: "{{ lookup('env', 'HOME') }}/repositories/pi-dashboard/CLAUDE.md"
+        dest: "{{ user_home }}/repositories/pi-dashboard/CLAUDE.md"
+
     timers:
-      - backup.timer
-      - health-check.timer
-      - freshrss-refresh.timer
+      - backup-pi.timer
+      - health-check-pi.timer
       - freshrss-digest.timer
-      - nightmode-on.timer
-      - nightmode-off.timer
+      - freshrss-maintenance.timer
       - pkg-maintenance.timer
       - wifi-watchdog.timer
-      - rss-bridge-cache-cleanup.timer
-      - freshrss-yt-favicons.timer
-      - freshrss-autoupdate.timer
       - monthly-review.timer
       - gpx-manifest.path
 
@@ -64,6 +65,7 @@
     - { role: sudoers, tags: [sudoers] }
     - { role: fail2ban, tags: [fail2ban] }
     - { role: authorized_keys, tags: [authorized_keys] }
+    - { role: claude, tags: [claude] }
 
 - name: Arch-server infrastructure
   hosts: arch
@@ -82,6 +84,10 @@
     authorized_ssh_keys:
       - "{{ ssh_pubkeys.mac }}"
       - "{{ ssh_pubkeys.proxmox }}"
+
+    claude_files:
+      - src: "{{ lookup('env', 'HOME') }}/repositories/dotfiles/CLAUDE.md"
+        dest: "{{ dotfiles_dir }}/CLAUDE.md"
 
     timers:
       - backup-arch.timer
@@ -129,6 +135,7 @@
     - { role: nginx, tags: [nginx] }
     - { role: fail2ban, tags: [fail2ban] }
     - { role: authorized_keys, tags: [authorized_keys] }
+    - { role: claude, tags: [claude] }
 
 - name: Proxmox host infrastructure
   hosts: proxmox

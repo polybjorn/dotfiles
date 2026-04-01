@@ -2,7 +2,7 @@
 Description=Daily arch-server backup
 
 [Timer]
-OnCalendar=*-*-* 03:00:00
+OnCalendar=*-*-* 02:30:00
 Persistent=true
 
 [Install]

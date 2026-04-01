@@ -1,0 +1,6 @@
+[Unit]
+Description=Nightly FreshRSS & RSS-Bridge maintenance
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/freshrss-maintenance.sh

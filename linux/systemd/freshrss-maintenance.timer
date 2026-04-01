@@ -1,5 +1,5 @@
 [Unit]
-Description=Daily RSS-Bridge cache cleanup
+Description=Nightly FreshRSS & RSS-Bridge maintenance
 
 [Timer]
 OnCalendar=*-*-* 04:00

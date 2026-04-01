@@ -169,7 +169,7 @@ if ssh -o ConnectTimeout=5 -o BatchMode=yes "$PI_HOST" true 2>/dev/null; then
 
   # Check key Pi timers ran recently
   PI_STALE=""
-  for timer in health-check backup freshrss-refresh; do
+  for timer in health-check-pi backup-pi; do
     LAST=$(ssh "$PI_HOST" "systemctl show ${timer}.timer -p LastTriggerUSec --value 2>/dev/null" 2>/dev/null)
     if [ -z "$LAST" ] || [ "$LAST" = "n/a" ]; then
       PI_STALE="${PI_STALE}- ${timer}.timer (never triggered)\n"

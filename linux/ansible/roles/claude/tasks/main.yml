@@ -1,0 +1,10 @@
+---
+- name: Deploy CLAUDE.md files
+  copy:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    owner: "{{ user_name }}"
+    group: "{{ user_name }}"
+    mode: "0644"
+  become: false
+  loop: "{{ claude_files }}"

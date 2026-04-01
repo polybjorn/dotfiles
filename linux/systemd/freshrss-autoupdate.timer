@@ -1,9 +1,0 @@
-[Unit]
-Description=Daily auto-update check for whitelisted services
-
-[Timer]
-OnCalendar=*-*-* 09:00
-Persistent=true
-
-[Install]
-WantedBy=timers.target

@@ -1,71 +1,37 @@
 {
-  "jobs": [
+  "hosts": [
     {
-      "id": "health-check",
-      "name": "Health check",
-      "description": "Diagnostics & ntfy alerts",
-      "icon": "/icons/pi.svg",
-      "schedule": "every 4h"
-    },
-    {
-      "id": "backup",
-      "name": "Backup",
-      "description": "DBs, configs & app data",
-      "icon": "/icons/pi.svg",
-      "schedule": "02:30"
-    },
-    {
-      "id": "pkg-maintenance",
-      "name": "System updates",
-      "description": "Update, upgrade & autoremove",
-      "icon": "/icons/pi.svg",
-      "schedule": "Sun 09:00"
-    },
-    {
-      "id": "nightmode",
-      "name": "Night mode",
-      "description": "Disable Firefly & InvoicePlane",
-      "icon": "/icons/moon.svg",
-      "schedule": "01:00–07:00",
-      "timers": [
-        "nightmode-on.timer",
-        "nightmode-off.timer"
+      "host": "pi-server",
+      "jobs": [
+        { "id": "backup-pi", "name": "Backup", "description": "DBs, configs & app data", "schedule": "02:30" },
+        { "id": "health-check-pi", "name": "Health check", "description": "Diagnostics & ntfy alerts", "schedule": "09:00" },
+        { "id": "pkg-maintenance", "name": "System updates", "description": "Update, upgrade & autoremove", "schedule": "Sun 09:00" },
+        { "id": "freshrss-digest", "name": "RSS digest", "description": "Self-hosted release summary", "schedule": "Mon 08:00" },
+        { "id": "freshrss-maintenance", "name": "RSS maintenance", "description": "Cache cleanup, autoupdate & YT favicons (1st)", "schedule": "04:00" },
+        { "id": "wifi-watchdog", "name": "WiFi watchdog", "description": "Network reconnection", "schedule": "every 2m" },
+        { "id": "monthly-review", "name": "Monthly review", "description": "Monthly review reminder", "schedule": "1st 09:00" },
+        { "id": "gpx-manifest", "name": "GPX manifest", "description": "Rebuild trail index on change", "schedule": "path trigger" }
       ]
     },
     {
-      "id": "freshrss-refresh",
-      "name": "Feed refresh",
-      "description": "Update feeds",
-      "icon": "/icons/freshrss.png",
-      "schedule": "*/15 07-23h"
+      "host": "arch-server",
+      "ssh": "admin@arch-server",
+      "jobs": [
+        { "id": "backup-arch", "name": "Backup", "description": "Postgres, configs, app data", "schedule": "02:30" },
+        { "id": "health-check-arch", "name": "Health check", "description": "Diagnostics & ntfy alerts", "schedule": "09:00" },
+        { "id": "pkg-maintenance", "name": "System updates", "description": "Update, upgrade & autoremove", "schedule": "Sun 09:00" },
+        { "id": "tailscale-certrenew", "name": "TLS cert renewal", "description": "Renew Tailscale HTTPS certs", "schedule": "02:00" },
+        { "id": "qbt-cleanup", "name": "qBit maintenance", "description": "Remove slow-seeding torrents", "schedule": "1st 03:00" }
+      ]
     },
     {
-      "id": "freshrss-digest",
-      "name": "Release digest",
-      "description": "Self-hosted release summary",
-      "icon": "/icons/freshrss.png",
-      "schedule": "Mon 08:00"
-    },
-    {
-      "id": "freshrss-yt-favicons",
-      "name": "YT favicons",
-      "description": "Refresh channel avatars",
-      "icon": "/icons/freshrss.png",
-      "schedule": "1st 05:00"
-    },
-    {
-      "id": "freshrss-autoupdate",
-      "name": "Service autoupdate",
-      "description": "Auto-update RSS-Bridge & FreshRSS",
-      "icon": "/icons/freshrss.png",
-      "schedule": "09:00"
-    },
-    {
-      "id": "rss-bridge-cache-cleanup",
-      "name": "RSS-Bridge cache",
-      "description": "Clean stale cache files",
-      "icon": "/icons/rss-bridge.png",
-      "schedule": "04:00"
+      "host": "proxmox",
+      "ssh": "root@proxmox",
+      "jobs": [
+        { "id": "backup-proxmox", "name": "Backup", "description": "Host configs & ZFS metadata", "schedule": "02:30" },
+        { "id": "health-check-proxmox", "name": "Health check", "description": "Diagnostics & ntfy alerts", "schedule": "09:00" },
+        { "id": "pkg-maintenance", "name": "System updates", "description": "Update, upgrade & autoremove", "schedule": "Sun 09:00" }
+      ]
     }
   ]
 }

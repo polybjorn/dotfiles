@@ -3,7 +3,6 @@
 
 import json
 import os
-import re
 import sqlite3
 import subprocess
 import time
@@ -22,61 +21,8 @@ ST_API = 'http://localhost:8384'
 NTFY_URL = 'http://localhost:2586'
 NTFY_TOPICS = ['pi-alerts', 'mac-alerts', 'openclaw', 'proxmox-alerts', 'arch-server-alerts']
 NTFY_CACHE_DB = '/var/cache/ntfy/cache.db'
-VALID_JOB_ID = re.compile(r'^[a-z0-9-]+$')
 
-def relative_time(seconds):
-    """Format seconds-ago as human-readable relative time."""
-    if seconds < 60:
-        return "just now"
-    minutes = int(seconds // 60)
-    if minutes < 60:
-        return f"{minutes}m ago"
-    hours = int(seconds // 3600)
-    if hours < 24:
-        return f"{hours}h ago"
-    days = int(seconds // 86400)
-    return f"{days}d ago"
 
-def timer_is_enabled(timer_unit):
-    """Check if a systemd timer is enabled."""
-    result = subprocess.run(
-        ['systemctl', 'is-enabled', timer_unit],
-        capture_output=True, text=True
-    )
-    return result.stdout.strip() == 'enabled'
-
-def timer_toggle(timer_unit, enable):
-    """Enable or disable a systemd timer."""
-    action = 'enable' if enable else 'disable'
-    subprocess.run(
-        ['sudo', 'systemctl', action, timer_unit],
-        capture_output=True, text=True, timeout=10, check=True
-    )
-
-def get_job_detail(job_id):
-    """Get a short detail string for a specific job, or None."""
-    try:
-        if job_id == 'health-check':
-            result = subprocess.run(
-                ['journalctl', '-u', 'health-check.service', '-n', '1', '--no-pager', '-q', '-o', 'short-iso'],
-                capture_output=True, text=True, timeout=5
-            )
-            if result.stdout.strip():
-                line = result.stdout.strip().split('\n')[-1]
-                ts = line.split(' ')[0] if line else None
-                if ts:
-                    from datetime import datetime, timezone
-                    try:
-                        dt = datetime.fromisoformat(ts)
-                        age = (datetime.now(timezone.utc) - dt.astimezone(timezone.utc)).total_seconds()
-                        return relative_time(age)
-                    except Exception:
-                        return ts
-            return None
-
-    except:
-        pass
-    return None
 
 def get_ntfy_data():
     """Fetch topic stats and recent messages from ntfy."""
@@ -285,13 +231,8 @@ class Handler(BaseHTTPRequestHandler):
         if self.path == '/api/ntfy/clear':
             self._handle_ntfy_clear()
             return
-        m = re.match(r'^/api/cron/([a-z0-9-]+)/(enable|disable)$', self.path)
-        if m:
-            job_id, action = m.group(1), m.group(2)
-            self._handle_cron_toggle(job_id, action)
-        else:
-            self.send_response(404)
-            self.end_headers()
+        self.send_response(404)
+        self.end_headers()
 
     def _handle_ntfy_clear(self):
         try:
@@ -315,53 +256,25 @@ class Handler(BaseHTTPRequestHandler):
         self.send_header('Access-Control-Allow-Headers', 'Content-Type')
         self.end_headers()
 
-    @staticmethod
-    def _get_timers(job):
-        """Get timer unit(s) for a job — supports grouped timers."""
-        return job.get('timers', [job['id'] + '.timer'])
-
     def _handle_cron_list(self):
         try:
             with open(TASK_REGISTRY) as f:
                 registry = json.load(f)
-            jobs = []
-            for job in registry['jobs']:
-                timers = self._get_timers(job)
-                enabled = all(timer_is_enabled(t) for t in timers)
-                entry = {
-                    'id':          job['id'],
-                    'name':        job['name'],
-                    'schedule':    job['schedule'],
-                    'enabled':     enabled,
-                }
-                if 'icon' in job:
-                    entry['icon'] = job['icon']
-                if 'description' in job:
-                    entry['description'] = job['description']
-                detail = get_job_detail(job['id'])
-                if detail:
-                    entry['detail'] = detail
-                jobs.append(entry)
-            self._send_json(200, {'jobs': jobs})
-        except Exception as e:
-            self._send_json(500, {'error': str(e)})
-
-    def _handle_cron_toggle(self, job_id, action):
-        if not VALID_JOB_ID.match(job_id):
-            self._send_json(400, {'error': 'Invalid job ID'})
-            return
-        try:
-            with open(TASK_REGISTRY) as f:
-                registry = json.load(f)
-            job = next((j for j in registry['jobs'] if j['id'] == job_id), None)
-            if not job:
-                self._send_json(400, {'error': 'Unknown job ID'})
-                return
-            timers = self._get_timers(job)
-            for t in timers:
-                timer_toggle(t, action == 'enable')
-            enabled = all(timer_is_enabled(t) for t in timers)
-            self._send_json(200, {'enabled': enabled})
+            hosts = []
+            for host_entry in registry['hosts']:
+                jobs = []
+                for job in host_entry['jobs']:
+                    jobs.append({
+                        'id':          job['id'],
+                        'name':        job['name'],
+                        'schedule':    job['schedule'],
+                        'description': job.get('description', ''),
+                    })
+                hosts.append({
+                    'host': host_entry['host'],
+                    'jobs': jobs,
+                })
+            self._send_json(200, {'hosts': hosts})
         except Exception as e:
             self._send_json(500, {'error': str(e)})
 
