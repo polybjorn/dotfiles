@@ -1,0 +1,6 @@
+[Unit]
+Description=Batched FreshRSS feed actualization
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/freshrss-fetch.sh

@@ -7,6 +7,7 @@
         { "id": "health-check-pi", "name": "Health check", "description": "Diagnostics & ntfy alerts", "schedule": "09:00" },
         { "id": "pkg-maintenance", "name": "System updates", "description": "Update, upgrade & autoremove", "schedule": "Sun 09:00" },
         { "id": "freshrss-digest", "name": "RSS digest", "description": "Self-hosted release summary", "schedule": "Mon 08:00" },
+        { "id": "freshrss-fetch", "name": "RSS fetch", "description": "Batched feed actualization (15 feeds/run)", "schedule": "every 10m" },
         { "id": "freshrss-maintenance", "name": "RSS maintenance", "description": "Cache cleanup, autoupdate & YT favicons (1st)", "schedule": "04:00" },
         { "id": "wifi-watchdog", "name": "WiFi watchdog", "description": "Network reconnection", "schedule": "every 2m" },
         { "id": "monthly-review", "name": "Monthly review", "description": "Monthly review reminder", "schedule": "1st 09:00" },
