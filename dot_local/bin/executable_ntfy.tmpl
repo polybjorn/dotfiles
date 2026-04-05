@@ -9,7 +9,7 @@ set -euo pipefail
 [[ -f "$HOME/.config/dotfiles/env" ]] && source "$HOME/.config/dotfiles/env"
 
 PRIORITY="default"
-TOPIC="${NTFY_TOPIC:-pi-alerts}"
+TOPIC="${NTFY_TOPIC:-{{ .ntfy_topic }}}"
 
 while getopts "p:t:" opt; do
   case $opt in

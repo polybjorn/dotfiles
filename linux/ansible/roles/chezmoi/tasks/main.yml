@@ -1,0 +1,15 @@
+---
+- name: Pull latest chezmoi source
+  become_user: "{{ user_name }}"
+  command: chezmoi update --apply=false
+  changed_when: false
+
+- name: Regenerate chezmoi config
+  become_user: "{{ user_name }}"
+  command: chezmoi init
+  changed_when: false
+
+- name: Apply chezmoi
+  become_user: "{{ user_name }}"
+  command: chezmoi apply --force
+  changed_when: false

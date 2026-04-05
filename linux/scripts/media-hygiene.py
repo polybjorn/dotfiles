@@ -614,9 +614,9 @@ def main():
                 parts.append(f"{format_size(total_bytes)} freed")
             if stats["inconsistencies"] > 0:
                 parts.append(f"{stats['inconsistencies']} warning(s)")
-            notify("Media Hygiene ✓", " · ".join(parts))
+            notify("Media Hygiene", " · ".join(parts))
         else:
-            notify("Media Hygiene ✓", "Nothing to clean — library is tidy")
+            notify("Media Hygiene", "Nothing to clean — library is tidy")
 
     log_fh.close()
 

@@ -66,6 +66,7 @@
     - { role: fail2ban, tags: [fail2ban] }
     - { role: authorized_keys, tags: [authorized_keys] }
     - { role: claude, tags: [claude] }
+    - { role: chezmoi, tags: [chezmoi] }
 
 - name: Arch-server infrastructure
   hosts: arch
@@ -136,6 +137,7 @@
     - { role: fail2ban, tags: [fail2ban] }
     - { role: authorized_keys, tags: [authorized_keys] }
     - { role: claude, tags: [claude] }
+    - { role: chezmoi, tags: [chezmoi] }
 
 - name: Proxmox host infrastructure
   hosts: proxmox

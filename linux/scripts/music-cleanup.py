@@ -454,9 +454,9 @@ def main():
                 parts.append(f"{stats['junk_deleted']} junk file(s)")
             if stats["empty_dirs"]:
                 parts.append(f"{stats['empty_dirs']} empty dir(s)")
-            notify("Music Cleanup ✓", " · ".join(parts))
+            notify("Music Cleanup", " · ".join(parts))
         else:
-            notify("Music Cleanup ✓", "Nothing to clean — library is tidy")
+            notify("Music Cleanup", "Nothing to clean — library is tidy")
 
         log(f"  --- All time ({cumulative['runs']} run{'s' if cumulative['runs'] != 1 else ''}) ---")
         log(f"  Total freed:         {format_size(cumulative['bytes_freed'])}")

@@ -7,3 +7,12 @@ encryption = "age"
   is_mac = {{ eq .chezmoi.os "darwin" }}
   is_linux = {{ eq .chezmoi.os "linux" }}
   is_windows = {{ eq .chezmoi.os "windows" }}
+{{- if eq .chezmoi.hostname "baa-macbook-m4" }}
+  ntfy_topic = "mac-alerts"
+{{- else if eq .chezmoi.hostname "arch-server" }}
+  ntfy_topic = "arch-server-alerts"
+{{- else if eq .chezmoi.hostname "pi-server" }}
+  ntfy_topic = "pi-alerts"
+{{- else }}
+  ntfy_topic = "pi-alerts"
+{{- end }}

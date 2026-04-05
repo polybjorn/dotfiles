@@ -1,4 +1,10 @@
 ---
+- name: Template ntfy-failure service
+  template:
+    src: ntfy-failure@.service.j2
+    dest: /etc/systemd/system/ntfy-failure@.service
+  notify: daemon-reload
+
 - name: Find systemd unit files
   find:
     paths: "{{ dotfiles_dir }}/linux/systemd"

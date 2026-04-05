@@ -1,0 +1,8 @@
+[Unit]
+Description=Send ntfy alert on %i failure
+
+[Service]
+Type=oneshot
+User=admin
+EnvironmentFile=-%h/.config/dotfiles/env
+ExecStart=/bin/sh -c 'curl -s -o /dev/null -H "Title: %i failed" -H "Priority: high" -H "Tags: skull,warning" -d "From: systemd (on-failure)\n\nService %i failed on %H" "$${NTFY_URL:-http://localhost:2586}/$${NTFY_TOPIC:-{{ ntfy_topic }}}"'
