@@ -3,6 +3,9 @@
 
 [[ -f "$HOME/.config/dotfiles/env" ]] && source "$HOME/.config/dotfiles/env"
 
+# Apply latest dotfiles before running checks
+chezmoi apply --no-tty 2>/dev/null || true
+
 NTFY_URL="${NTFY_URL:-https://localhost:2587}/mac-alerts"
 HOST=$(scutil --get LocalHostName 2>/dev/null || hostname -s)
 PI_HOST="${PI_HOST:-admin@pi-server}"
@@ -152,22 +155,10 @@ if [ -n "$ST_KEY" ] && curl -s --max-time 3 "$ST_API/rest/system/status" -H "X-A
   fi
 fi
 
-# --- Pi services (via SSH, skip if unreachable) ---
+# --- Pi timers (via SSH, skip if unreachable) ---
+# Service monitoring handled by pi-server's own health check
 if ssh -o ConnectTimeout=5 -o BatchMode=yes "$PI_HOST" true 2>/dev/null; then
-  PI_DOWN=""
-  for svc in nginx ntfy syncthing@admin stats-api cloudflared tailscaled radicale mariadb; do
-    STATUS=$(ssh "$PI_HOST" "systemctl is-active $svc 2>/dev/null" 2>/dev/null)
-    if [ "$STATUS" != "active" ]; then
-      PI_DOWN="${PI_DOWN}- $svc ($STATUS)\n"
-    fi
-  done
-
-  if [ -n "$PI_DOWN" ]; then
-    alert "high" "Pi Service(s) Down" "skull,warning" \
-      "$(echo -e "Dead services on pi-server:\n$PI_DOWN")"
-  fi
-
-  # Check key Pi timers ran recently
+  # Check key Pi timers ran recently (external watchdog)
   PI_STALE=""
   for timer in health-check-pi backup-pi; do
     LAST=$(ssh "$PI_HOST" "systemctl show ${timer}.timer -p LastTriggerUSec --value 2>/dev/null" 2>/dev/null)
