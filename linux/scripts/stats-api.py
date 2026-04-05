@@ -19,7 +19,7 @@ MAC_STATS_FILE = '/var/www/pi-dashboard/mac-stats.json'
 MAC_OFFLINE_SECONDS = 300
 ST_API = 'http://localhost:8384'
 NTFY_URL = 'http://localhost:2586'
-NTFY_TOPICS = ['pi-alerts', 'mac-alerts', 'openclaw', 'proxmox-alerts', 'arch-server-alerts']
+NTFY_TOPICS = ['pi-alerts', 'mac-alerts', 'proxmox-alerts', 'arch-server-alerts']
 NTFY_CACHE_DB = '/var/cache/ntfy/cache.db'
 
 
