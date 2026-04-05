@@ -8,7 +8,7 @@ set -euo pipefail
 [[ -f "$HOME/.config/dotfiles/env" ]] && source "$HOME/.config/dotfiles/env"
 
 HOST=$(scutil --get LocalHostName 2>/dev/null || hostname -s)
-BACKUP_DIR="$HOME/Vault/Backups/$HOST"
+BACKUP_DIR="$HOME/Vault/Backups/mac"
 NTFY_URL="${NTFY_URL:-https://localhost:2587}/mac-alerts"
 RETENTION_DAYS=7
 DATE=$(date +%F)

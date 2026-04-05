@@ -1,5 +1,8 @@
 export ZDOTDIR="$HOME/.config/zsh"
 
+# PATH
+export PATH="$HOME/.local/bin:$PATH"
+
 # XDG Base Directories
 export XDG_CONFIG_HOME="$HOME/.config"
 export XDG_CACHE_HOME="$HOME/.cache"

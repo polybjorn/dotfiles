@@ -12,7 +12,7 @@
   <array>
     <string>/bin/cp</string>
     <string>__HOME__/.claude/CLAUDE.md</string>
-    <string>__HOME__/Vault/Backups/mac-claude/CLAUDE.md</string>
+    <string>__HOME__/Vault/Backups/mac/CLAUDE.md</string>
   </array>
 </dict>
 </plist>

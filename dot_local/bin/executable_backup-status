@@ -59,7 +59,7 @@ else
 fi
 
 # Mac backups (only show on Mac, or via Syncthing on Pi)
-MAC_BACKUP_DIR="$HOME/Vault/Backups/$(scutil --get LocalHostName 2>/dev/null || hostname -s)"
+MAC_BACKUP_DIR="$HOME/Vault/Backups/mac"
 if [ -d "$MAC_BACKUP_DIR" ]; then
   echo
   echo "${bold}Mac backups${reset} ($MAC_BACKUP_DIR)"
@@ -80,7 +80,7 @@ fi
 
 # CLAUDE.md backup
 echo
-CLAUDE_BACKUP="$HOME/Vault/Backups/mac-claude/CLAUDE.md"
+CLAUDE_BACKUP="$HOME/Vault/Backups/mac/CLAUDE.md"
 if [ -f "$CLAUDE_BACKUP" ]; then
   if [[ "$OSTYPE" == darwin* ]]; then
     mtime=$(stat -f%m "$CLAUDE_BACKUP")

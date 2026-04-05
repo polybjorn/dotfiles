@@ -161,16 +161,16 @@ elif [ $(stat -c%s "$EXPECTED_BACKUP") -lt 1048576 ]; then
 fi
 
 # --- CLAUDE.md backup staleness ---
-CLAUDE_BACKUP="$USER_HOME/Vault/Backups/mac-claude/CLAUDE.md"
+CLAUDE_BACKUP="$USER_HOME/Vault/Backups/mac/CLAUDE.md"
 if [ -f "$CLAUDE_BACKUP" ]; then
     CLAUDE_AGE_DAYS=$(( ($(date +%s) - $(stat -c%Y "$CLAUDE_BACKUP")) / 86400 ))
     if [ "$CLAUDE_AGE_DAYS" -gt 7 ]; then
         alert "default" "CLAUDE.md Backup Stale" "memo,warning" \
             "CLAUDE.md backup is ${CLAUDE_AGE_DAYS} days old on $HOST (Mac not syncing?)"
     fi
-elif [ -d "$USER_HOME/Vault/Backups/mac-claude" ]; then
+elif [ -d "$USER_HOME/Vault/Backups/mac" ]; then
     alert "default" "CLAUDE.md Backup Missing" "memo,warning" \
-        "CLAUDE.md backup file not found in mac-claude/ on $HOST"
+        "CLAUDE.md backup file not found in mac/ on $HOST"
 fi
 
 # --- Syncthing folder health ---
