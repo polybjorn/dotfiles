@@ -1,6 +1,6 @@
 #!/bin/bash
 # Server backup — dumps databases, configs, and app data into a dated tarball
-# Stored locally + copied to Syncthing for off-device redundancy
+# Stored in Syncthing Vault for off-device redundancy
 # Sends ntfy alert on failure only
 
 set -euo pipefail
@@ -8,8 +8,7 @@ set -euo pipefail
 HOST=$(hostname)
 SCRIPT_OWNER="$(stat -c "%U" "$(readlink -f "$0")")"
 USER_HOME="$(getent passwd "$SCRIPT_OWNER" | cut -d: -f6)"
-BACKUP_DIR="$USER_HOME/backups/$HOST"
-SYNC_DIR="$USER_HOME/Vault/Backups/$HOST"
+BACKUP_DIR="$USER_HOME/Vault/Backups/$HOST"
 NTFY_URL="http://localhost:2586/pi-alerts"
 RETENTION_DAYS=7
 DATE=$(date +%F)
@@ -37,7 +36,6 @@ echo "=== Pi backup started: $DATE ==="
 
 # Create directory structure
 mkdir -p "$WORK_DIR"/{databases,configs,app-data}
-mkdir -p "$SYNC_DIR"
 
 # --- Databases ---
 
@@ -105,14 +103,10 @@ if [ -n "$VERIFY_FAIL" ]; then
     cleanup_on_failure "integrity check failed: $VERIFY_FAIL"
 fi
 
-# Copy to Syncthing
-cp "$TARBALL" "$SYNC_DIR/"
-
 # --- Cleanup old backups ---
 
 echo "Cleaning up backups older than ${RETENTION_DAYS} days..."
 find "$BACKUP_DIR" -name "*.tar.gz" -mtime +$RETENTION_DAYS -delete
-find "$SYNC_DIR" -name "*.tar.gz" -mtime +$RETENTION_DAYS -delete
 
 SIZE=$(du -h "$TARBALL" | cut -f1)
 echo "=== Backup complete: $TARBALL ($SIZE) ==="

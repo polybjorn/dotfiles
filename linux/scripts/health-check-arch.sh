@@ -95,7 +95,7 @@ if [ "${FAILED_LOGINS:-0}" -gt 10 ]; then
 fi
 
 # --- Backup freshness ---
-BACKUP_DIR="$USER_HOME/backups/$HOST"
+BACKUP_DIR="/mnt/tank/backup/$HOST"
 HOUR=$(date +%H)
 if [ "$HOUR" -ge 4 ]; then
   EXPECTED_BACKUP="$BACKUP_DIR/$(date +%Y-%m-%d).tar.gz"

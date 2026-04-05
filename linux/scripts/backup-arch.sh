@@ -8,7 +8,7 @@ set -euo pipefail
 HOST=$(hostname)
 SCRIPT_OWNER="$(stat -c "%U" "$(readlink -f "$0")")"
 USER_HOME="$(getent passwd "$SCRIPT_OWNER" | cut -d: -f6)"
-BACKUP_DIR="$USER_HOME/backups/$HOST"
+BACKUP_DIR="/mnt/tank/backup/$HOST"
 SYNC_DIR="$USER_HOME/Vault/Backups/$HOST"
 RETENTION_DAYS=7
 DATE=$(date +%F)
