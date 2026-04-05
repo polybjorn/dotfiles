@@ -35,8 +35,8 @@ cd linux/ansible && ansible-playbook site.yml
 ```
 
 Ansible manages Pi, arch-server, and Proxmox from Mac over SSH. Three plays in `site.yml`:
-- **Pi**: sshd, scripts, systemd, nginx, configs, dashboard, sudoers, fail2ban, authorized_keys
-- **Arch-server**: sshd, scripts, systemd, fail2ban, authorized_keys, sudoers (NOPASSWD)
+- **Pi**: sshd, scripts, systemd, nginx, configs, dashboard, sudoers, fail2ban, authorized_keys, claude, chezmoi
+- **Arch-server**: sshd, scripts, systemd, nginx, fail2ban, authorized_keys, claude, chezmoi
 - **Proxmox**: sshd, scripts, systemd, authorized_keys (runs as root)
 
 ```sh
@@ -195,11 +195,14 @@ dotfiles/                              # chezmoi source directory
 │       ├── roles/
 │       │   ├── scripts/               # symlink scripts
 │       │   ├── systemd/               # copy units, enable timers
+│       │   │   └── templates/         # Jinja2 systemd units (ntfy-failure)
 │       │   ├── nginx/templates/       # Jinja2 nginx configs
 │       │   ├── sshd/templates/        # sshd_config hardening (all hosts)
 │       │   ├── fail2ban/templates/    # fail2ban jails (Pi + arch)
 │       │   ├── authorized_keys/       # per-host SSH key management
 │       │   ├── configs/templates/     # Jinja2 ntfy + cloudflared configs
+│       │   ├── chezmoi/               # pull + apply chezmoi on servers
+│       │   ├── claude/                # deploy CLAUDE.md files
 │       │   ├── dashboard/             # symlink pi-dashboard
 │       │   └── sudoers/               # timer control permissions
 │       └── vars/
