@@ -98,7 +98,6 @@ for service in "GoToSocial" "headscale" "FreshRSS" "Radicale" "Firefly III" "RSS
           AND e.title NOT LIKE '%beta%' AND e.title NOT LIKE '%-rc.%'
           AND e.title NOT LIKE '%-exp.%' AND e.title NOT LIKE 'develop-%'
           AND e.title NOT LIKE 'Development release%' AND e.title NOT LIKE '%alpha%'
-          AND e.title NOT LIKE 'n8n@%'
         ORDER BY e.date DESC LIMIT 1;
     ") || true
     [ -z "$latest_title" ] && continue
