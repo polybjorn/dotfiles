@@ -9,6 +9,13 @@ SCRIPT_DIR="$(dirname "$(readlink -f "$0")")"
 DB="/var/www/FreshRSS/data/users/freshrss/db.sqlite"
 NTFY_URL="http://localhost:2586/pi-alerts"
 
+# ── Clear stale feed errors ─────────────────────────────
+
+cleared=$(sqlite3 "$DB" "UPDATE feed SET error = 0 WHERE error = 1; SELECT changes();")
+if [ "$cleared" -gt 0 ]; then
+  echo "Cleared error flag on $cleared feed(s)"
+fi
+
 # ── RSS-Bridge cache cleanup ─────────────────────────────
 
 CACHE_DIR="/var/www/rss-bridge/cache"
