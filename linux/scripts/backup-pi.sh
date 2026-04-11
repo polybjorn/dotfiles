@@ -43,10 +43,10 @@ echo "Dumping MariaDB..."
 mariadb-dump --all-databases --single-transaction > "$WORK_DIR/databases/mariadb-all.sql"
 
 echo "Backing up GoToSocial SQLite..."
-sqlite3 /opt/gotosocial/data/sqlite.db ".backup '$WORK_DIR/databases/gotosocial.db'"
+sqlite3 /opt/gotosocial/data/sqlite.db ".timeout 30000" ".backup '$WORK_DIR/databases/gotosocial.db'"
 
 echo "Backing up FreshRSS SQLite..."
-sqlite3 /var/www/FreshRSS/data/users/freshrss/db.sqlite ".backup '$WORK_DIR/databases/freshrss.db'"
+sqlite3 /var/www/FreshRSS/data/users/freshrss/db.sqlite ".timeout 30000" ".backup '$WORK_DIR/databases/freshrss.db'"
 
 echo "Exporting FreshRSS OPML..."
 sudo -u www-data php /var/www/FreshRSS/cli/export-opml-for-user.php --user freshrss > "$WORK_DIR/configs/freshrss-feeds.opml"

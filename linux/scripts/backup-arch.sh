@@ -115,7 +115,7 @@ ND_DB="/var/lib/navidrome/navidrome.db"
 if [ -f "$ND_DB" ]; then
   mkdir -p "$WORK_DIR/app-data/navidrome"
   if command -v sqlite3 >/dev/null 2>&1; then
-    sqlite3 "$ND_DB" ".backup '$WORK_DIR/app-data/navidrome/navidrome.db'"
+    sqlite3 "$ND_DB" ".timeout 30000" ".backup '$WORK_DIR/app-data/navidrome/navidrome.db'"
   else
     cp "$ND_DB" "$WORK_DIR/app-data/navidrome/"
   fi
